@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AeroX 3D - Drone Simulator & Track Builder Sandbox</title>
-    <meta name="description" content="State-of-the-art 3D webquadcopter drone simulator with realistic PID physics, FPV HUD, and custom track builder sandbox.">
+    <title>STEM Drone Challange</title>
+    <meta name="description"
+        content="State-of-the-art 3D webquadcopter drone simulator with realistic PID physics, FPV HUD, and custom track builder sandbox.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <!-- Import Map for Three.js -->
     <script type="importmap">
@@ -20,6 +24,7 @@
         }
     </script>
 </head>
+
 <body>
     <div id="app-container">
         <!-- 3D Canvas Viewport -->
@@ -29,8 +34,8 @@
         <header id="top-bar">
             <div class="brand">
                 <span class="logo-icon">🛸</span>
-                <span class="logo-text">AERO<span class="highlight">X</span> SIM</span>
-                <span class="version-tag">v2.5 PRO</span>
+                <span class="logo-text">Drone Challange<span class="highlight">Test</span> Simulationnnn</span>
+                <span class="version-tag">testing</span>
             </div>
 
             <!-- Mode Switcher Tabs -->
@@ -45,7 +50,8 @@
 
             <div class="top-controls">
                 <button id="btn-sound-toggle" class="icon-btn" title="Toggle Audio (M)">🔊</button>
-                <button id="btn-camera-toggle" class="icon-btn" title="Change Camera View (C)">📹 <span id="cam-name">CHASE</span></button>
+                <button id="btn-camera-toggle" class="icon-btn" title="Change Camera View (C)">📹 <span
+                        id="cam-name">CHASE</span></button>
                 <button id="btn-settings-toggle" class="icon-btn" title="Settings & Drone Tuning">⚙️</button>
                 <button id="btn-help-toggle" class="icon-btn" title="Controls & Help (?)">❓</button>
             </div>
@@ -59,7 +65,8 @@
             <!-- Top Center Race Telemetry -->
             <div id="race-banner" class="hud-box race-banner hidden">
                 <div class="race-timer"><span id="timer-val">00:00.000</span></div>
-                <div class="checkpoint-counter">CHECKPOINT <span id="cp-current">0</span> / <span id="cp-total">0</span></div>
+                <div class="checkpoint-counter">CHECKPOINT <span id="cp-current">0</span> / <span id="cp-total">0</span>
+                </div>
                 <div class="best-lap">BEST: <span id="best-lap-val">--:--.--</span></div>
             </div>
 
@@ -103,19 +110,27 @@
                 <div class="motor-grid">
                     <div class="motor-cell">
                         <span class="m-title">M1 (FL)</span>
-                        <div class="m-bar"><div id="m1-bar" class="m-fill" style="height: 0%;"></div></div>
+                        <div class="m-bar">
+                            <div id="m1-bar" class="m-fill" style="height: 0%;"></div>
+                        </div>
                     </div>
                     <div class="motor-cell">
                         <span class="m-title">M2 (FR)</span>
-                        <div class="m-bar"><div id="m2-bar" class="m-fill" style="height: 0%;"></div></div>
+                        <div class="m-bar">
+                            <div id="m2-bar" class="m-fill" style="height: 0%;"></div>
+                        </div>
                     </div>
                     <div class="motor-cell">
                         <span class="m-title">M3 (RL)</span>
-                        <div class="m-bar"><div id="m3-bar" class="m-fill" style="height: 0%;"></div></div>
+                        <div class="m-bar">
+                            <div id="m3-bar" class="m-fill" style="height: 0%;"></div>
+                        </div>
                     </div>
                     <div class="motor-cell">
                         <span class="m-title">M4 (RR)</span>
-                        <div class="m-bar"><div id="m4-bar" class="m-fill" style="height: 0%;"></div></div>
+                        <div class="m-bar">
+                            <div id="m4-bar" class="m-fill" style="height: 0%;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -223,222 +238,249 @@
                 </div>
                 <div class="tool-group">
                     <span class="tool-label">ACTIONS:</span>
-                    <button id="btn-rotate-item" class="tool-btn" title="Rotate selected object 45° (R)">🔄 Rotate</button>
+                    <button id="btn-rotate-item" class="tool-btn" title="Rotate selected object 45° (R)">🔄
+                        Rotate</button>
                     <button id="btn-elevate-up" class="tool-btn" title="Raise height (+)">⬆️ Height +</button>
                     <button id="btn-elevate-down" class="tool-btn" title="Lower height (-)">⬇️ Height -</button>
-                    <button id="btn-delete-item" class="tool-btn danger" title="Delete Selected Object (Del)">🗑️ Delete</button>
-                <div class="tool-group">
-                    <button id="btn-toggle-ruler" class="tool-btn active" title="Toggle 3D Floor Ruler Lines (1m grid)">📐 3D Ruler Grid</button>
-                    <button id="btn-measure-tape" class="tool-btn" title="Laser Tape Measure: Click 2 points to measure distance">📏 Tape Measure</button>
-                    <button id="btn-snap-grid" class="tool-btn active">📐 Snap (0.1m)</button>
-                    <button id="btn-clear-track" class="tool-btn danger">⚠️ Clear All</button>
+                    <button id="btn-delete-item" class="tool-btn danger" title="Delete Selected Object (Del)">🗑️
+                        Delete</button>
+                    <div class="tool-group">
+                        <button id="btn-toggle-ruler" class="tool-btn active"
+                            title="Toggle 3D Floor Ruler Lines (1m grid)">📐 3D Ruler Grid</button>
+                        <button id="btn-measure-tape" class="tool-btn"
+                            title="Laser Tape Measure: Click 2 points to measure distance">📏 Tape Measure</button>
+                        <button id="btn-snap-grid" class="tool-btn active">📐 Snap (0.1m)</button>
+                        <button id="btn-clear-track" class="tool-btn danger">⚠️ Clear All</button>
+                    </div>
+                </div>
+
+                <!-- Floating Measuring Tape Distance Readout Badge -->
+                <div id="measure-badge" class="measure-badge hidden">📏 DISTANCE: 0.00 m</div>
+
+                <!-- Right Sandbox Preset & File Management Panel -->
+                <div class="editor-panel right-panel">
+                    <div class="panel-header">
+                        <h3>💾 TRACK MANAGEMENT</h3>
+                    </div>
+                    <div class="preset-section">
+                        <label>PRESET TRACKS</label>
+                        <button class="preset-btn" data-preset="manual_plan"
+                            style="border-color: var(--primary); color: var(--primary); font-weight:700;">📜 Pelan
+                            Penerbangan Manual (Gambar)</button>
+                        <button class="preset-btn" data-preset="cyber">🌃 Cyber Neon Circuit</button>
+                        <button class="preset-btn" data-preset="slalom">🚩 Slalom Challenge</button>
+                        <button class="preset-btn" data-preset="canyon">⛰️ Canyon Obstacle Run</button>
+                        <button class="preset-btn" data-preset="empty">✨ Blank Sandbox Field</button>
+                    </div>
+                    <div class="action-divider"></div>
+                    <div class="file-actions">
+                        <button id="btn-save-local" class="action-btn primary">💾 Save to Browser</button>
+                        <button id="btn-load-local" class="action-btn">📂 Load Saved Track</button>
+                        <button id="btn-export-json" class="action-btn">📤 Export JSON File</button>
+                        <button id="btn-import-trigger" class="action-btn">📥 Import JSON File</button>
+                        <input type="file" id="file-import-json" accept=".json" style="display:none;">
+                    </div>
+                    <div class="playtest-bar">
+                        <button id="btn-playtest-track" class="btn-playtest">🚀 FLY TEST TRACK (E)</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Floating Measuring Tape Distance Readout Badge -->
-            <div id="measure-badge" class="measure-badge hidden">📏 DISTANCE: 0.00 m</div>
-
-            <!-- Right Sandbox Preset & File Management Panel -->
-            <div class="editor-panel right-panel">
-                <div class="panel-header">
-                    <h3>💾 TRACK MANAGEMENT</h3>
-                </div>
-                <div class="preset-section">
-                    <label>PRESET TRACKS</label>
-                    <button class="preset-btn" data-preset="manual_plan" style="border-color: var(--primary); color: var(--primary); font-weight:700;">📜 Pelan Penerbangan Manual (Gambar)</button>
-                    <button class="preset-btn" data-preset="cyber">🌃 Cyber Neon Circuit</button>
-                    <button class="preset-btn" data-preset="slalom">🚩 Slalom Challenge</button>
-                    <button class="preset-btn" data-preset="canyon">⛰️ Canyon Obstacle Run</button>
-                    <button class="preset-btn" data-preset="empty">✨ Blank Sandbox Field</button>
-                </div>
-                <div class="action-divider"></div>
-                <div class="file-actions">
-                    <button id="btn-save-local" class="action-btn primary">💾 Save to Browser</button>
-                    <button id="btn-load-local" class="action-btn">📂 Load Saved Track</button>
-                    <button id="btn-export-json" class="action-btn">📤 Export JSON File</button>
-                    <button id="btn-import-trigger" class="action-btn">📥 Import JSON File</button>
-                    <input type="file" id="file-import-json" accept=".json" style="display:none;">
-                </div>
-                <div class="playtest-bar">
-                    <button id="btn-playtest-track" class="btn-playtest">🚀 FLY TEST TRACK (E)</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL: Settings & Drone Tuning -->
-        <div id="modal-settings" class="modal-overlay hidden">
-            <div class="modal-card">
-                <div class="modal-header">
-                    <h2>⚙️ SIMULATOR SETTINGS & PID TUNING</h2>
-                    <button class="btn-close-modal" data-modal="modal-settings">✖</button>
-                </div>
-                <div class="modal-body">
-                    <div class="setting-group">
-                        <label>Select Environment</label>
-                        <select id="setting-env-select">
-                            <option value="school_hall" selected>School Sports & Assembly Hall</option>
-                            <option value="cyber">Cyberpunk Neon City</option>
-                            <option value="canyon">Mountain Canyon Island</option>
-                            <option value="hangar">Indoor Training Hangar</option>
-                            <option value="sandbox">Open Sandbox Field</option>
-                        </select>
+            <!-- MODAL: Settings & Drone Tuning -->
+            <div id="modal-settings" class="modal-overlay hidden">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h2>⚙️ SIMULATOR SETTINGS & PID TUNING</h2>
+                        <button class="btn-close-modal" data-modal="modal-settings">✖</button>
                     </div>
-
-                    <div class="setting-group">
-                        <label>Drone Model</label>
-                        <select id="setting-drone-model">
-                            <option value="tello" selected>Ryze / DJI Tello Quadcopter (White Canopy & Prop Guards)</option>
-                            <option value="fpv_racer">FPV Apex Racer (Agile & High Speed)</option>
-                            <option value="cargo_hex">Heavy Cargo Hexacopter (Stable)</option>
-                            <option value="stealth">Stealth X-Quad (Futuristic Glow)</option>
-                        </select>
-                    </div>
-
-                    <div class="setting-group">
-                        <label>Flight Mode Default</label>
-                        <select id="setting-flight-mode">
-                            <option value="STABILIZED">Stabilized (Self-Leveling Angle Mode)</option>
-                            <option value="ACRO">Acro / Manual (Full Rate Control)</option>
-                            <option value="HOVER">Altitude Hold / Hover</option>
-                        </select>
-                    </div>
-
-                    <div class="setting-group">
-                        <label>Wind Intensity: <span id="val-wind-disp">0 km/h</span></label>
-                        <input type="range" id="setting-wind-slider" min="0" max="40" value="0" step="5">
-                    </div>
-
-                    <div class="tuning-section">
-                        <h3>PID Controller Sensitivity</h3>
-                        <div class="slider-row">
-                            <span>Roll/Pitch P Gain</span>
-                            <input type="range" id="pid-p" min="1.0" max="10.0" value="4.5" step="0.5">
-                            <span id="pid-p-val">4.5</span>
-                        </div>
-                        <div class="slider-row">
-                            <span>Self-Level Speed</span>
-                            <input type="range" id="pid-level" min="1.0" max="15.0" value="8.0" step="0.5">
-                            <span id="pid-level-val">8.0</span>
-                        </div>
-                    </div>
-
-                    <div class="tuning-section">
-                        <div class="section-title-row">
-                            <h3>🕹️ EDIT JOYSTICK & CONTROLLER CALIBRATION</h3>
-                            <button id="btn-reset-joystick" class="tool-btn danger" style="padding: 4px 8px; font-size: 0.7rem;">Reset Joystick</button>
-                        </div>
-
+                    <div class="modal-body">
                         <div class="setting-group">
-                            <label>RC Control Mode</label>
-                            <select id="joy-mode-select">
-                                <option value="2" selected>Mode 2 (Left: Throttle/Yaw, Right: Pitch/Roll)</option>
-                                <option value="1">Mode 1 (Left: Pitch/Yaw, Right: Throttle/Roll)</option>
+                            <label>Select Environment</label>
+                            <select id="setting-env-select">
+                                <option value="school_hall" selected>School Sports & Assembly Hall</option>
+                                <option value="cyber">Cyberpunk Neon City</option>
+                                <option value="canyon">Mountain Canyon Island</option>
+                                <option value="hangar">Indoor Training Hangar</option>
+                                <option value="sandbox">Open Sandbox Field</option>
                             </select>
                         </div>
 
-                        <div class="slider-row">
-                            <span>Stick Expo Sensitivity: <span id="joy-expo-val">0.30</span></span>
-                            <input type="range" id="joy-expo-slider" min="0.0" max="0.8" value="0.3" step="0.05">
-                        </div>
-
-                        <div class="slider-row">
-                            <span>Stick Deadzone: <span id="joy-deadzone-val">0.08</span></span>
-                            <input type="range" id="joy-deadzone-slider" min="0.00" max="0.25" value="0.08" step="0.01">
-                        </div>
-
                         <div class="setting-group">
-                            <label>On-Screen Touch Joysticks Overlay</label>
-                            <select id="joy-show-touch">
-                                <option value="always" selected>Always Visible (Touch & Mouse Drag)</option>
-                                <option value="never">Hide On-Screen Joysticks</option>
+                            <label>Drone Model</label>
+                            <select id="setting-drone-model">
+                                <option value="tello" selected>Ryze / DJI Tello Quadcopter (White Canopy & Prop Guards)
+                                </option>
+                                <option value="fpv_racer">FPV Apex Racer (Agile & High Speed)</option>
+                                <option value="cargo_hex">Heavy Cargo Hexacopter (Stable)</option>
+                                <option value="stealth">Stealth X-Quad (Futuristic Glow)</option>
                             </select>
                         </div>
 
-                        <div class="invert-checkbox-grid">
-                            <label class="check-label"><input type="checkbox" id="joy-inv-throt"> Invert Throttle</label>
-                            <label class="check-label"><input type="checkbox" id="joy-inv-pitch"> Invert Pitch</label>
-                            <label class="check-label"><input type="checkbox" id="joy-inv-roll"> Invert Roll</label>
-                            <label class="check-label"><input type="checkbox" id="joy-inv-yaw"> Invert Yaw</label>
+                        <div class="setting-group">
+                            <label>Flight Mode Default</label>
+                            <select id="setting-flight-mode">
+                                <option value="STABILIZED">Stabilized (Self-Leveling Angle Mode)</option>
+                                <option value="ACRO">Acro / Manual (Full Rate Control)</option>
+                                <option value="HOVER">Altitude Hold / Hover</option>
+                            </select>
                         </div>
-                    </div>
 
-                    <div class="tuning-section">
-                        <div class="section-title-row">
-                            <h3>🎮 EDIT CONTROL BUTTONS (KEYBINDINGS)</h3>
-                            <button id="btn-reset-keybinds" class="tool-btn danger" style="padding: 4px 8px; font-size: 0.7rem;">Reset Defaults</button>
+                        <div class="setting-group">
+                            <label>Wind Intensity: <span id="val-wind-disp">0 km/h</span></label>
+                            <input type="range" id="setting-wind-slider" min="0" max="40" value="0" step="5">
                         </div>
-                        <p class="section-subtitle">Click any button below, then press a key to rebind</p>
-                        <div class="keybind-grid">
-                            <div class="keybind-row"><span class="kb-label">Throttle Up</span><button class="keybind-btn" data-action="throttleUp">W</button></div>
-                            <div class="keybind-row"><span class="kb-label">Throttle Down</span><button class="keybind-btn" data-action="throttleDown">S</button></div>
-                            <div class="keybind-row"><span class="kb-label">Yaw Left</span><button class="keybind-btn" data-action="yawLeft">A</button></div>
-                            <div class="keybind-row"><span class="kb-label">Yaw Right</span><button class="keybind-btn" data-action="yawRight">D</button></div>
-                            <div class="keybind-row"><span class="kb-label">Pitch Forward</span><button class="keybind-btn" data-action="pitchForward">↑</button></div>
-                            <div class="keybind-row"><span class="kb-label">Pitch Backward</span><button class="keybind-btn" data-action="pitchBackward">↓</button></div>
-                            <div class="keybind-row"><span class="kb-label">Roll Left</span><button class="keybind-btn" data-action="rollLeft">←</button></div>
-                            <div class="keybind-row"><span class="kb-label">Roll Right</span><button class="keybind-btn" data-action="rollRight">→</button></div>
-                            <div class="keybind-row"><span class="kb-label">Air Brake</span><button class="keybind-btn" data-action="brake">SPACE</button></div>
-                            <div class="keybind-row"><span class="kb-label">Cycle Camera</span><button class="keybind-btn" data-action="camera">C</button></div>
-                            <div class="keybind-row"><span class="kb-label">Cycle Flight Mode</span><button class="keybind-btn" data-action="mode">M</button></div>
-                            <div class="keybind-row"><span class="kb-label">Toggle Sandbox Builder</span><button class="keybind-btn" data-action="editor">E</button></div>
-                            <div class="keybind-row"><span class="kb-label">Reset Position</span><button class="keybind-btn" data-action="reset">R</button></div>
+
+                        <div class="tuning-section">
+                            <h3>PID Controller Sensitivity</h3>
+                            <div class="slider-row">
+                                <span>Roll/Pitch P Gain</span>
+                                <input type="range" id="pid-p" min="1.0" max="10.0" value="4.5" step="0.5">
+                                <span id="pid-p-val">4.5</span>
+                            </div>
+                            <div class="slider-row">
+                                <span>Self-Level Speed</span>
+                                <input type="range" id="pid-level" min="1.0" max="15.0" value="8.0" step="0.5">
+                                <span id="pid-level-val">8.0</span>
+                            </div>
+                        </div>
+
+                        <div class="tuning-section">
+                            <div class="section-title-row">
+                                <h3>🕹️ EDIT JOYSTICK & CONTROLLER CALIBRATION</h3>
+                                <button id="btn-reset-joystick" class="tool-btn danger"
+                                    style="padding: 4px 8px; font-size: 0.7rem;">Reset Joystick</button>
+                            </div>
+
+                            <div class="setting-group">
+                                <label>RC Control Mode</label>
+                                <select id="joy-mode-select">
+                                    <option value="2" selected>Mode 2 (Left: Throttle/Yaw, Right: Pitch/Roll)</option>
+                                    <option value="1">Mode 1 (Left: Pitch/Yaw, Right: Throttle/Roll)</option>
+                                </select>
+                            </div>
+
+                            <div class="slider-row">
+                                <span>Stick Expo Sensitivity: <span id="joy-expo-val">0.30</span></span>
+                                <input type="range" id="joy-expo-slider" min="0.0" max="0.8" value="0.3" step="0.05">
+                            </div>
+
+                            <div class="slider-row">
+                                <span>Stick Deadzone: <span id="joy-deadzone-val">0.08</span></span>
+                                <input type="range" id="joy-deadzone-slider" min="0.00" max="0.25" value="0.08"
+                                    step="0.01">
+                            </div>
+
+                            <div class="setting-group">
+                                <label>On-Screen Touch Joysticks Overlay</label>
+                                <select id="joy-show-touch">
+                                    <option value="always" selected>Always Visible (Touch & Mouse Drag)</option>
+                                    <option value="never">Hide On-Screen Joysticks</option>
+                                </select>
+                            </div>
+
+                            <div class="invert-checkbox-grid">
+                                <label class="check-label"><input type="checkbox" id="joy-inv-throt"> Invert
+                                    Throttle</label>
+                                <label class="check-label"><input type="checkbox" id="joy-inv-pitch"> Invert
+                                    Pitch</label>
+                                <label class="check-label"><input type="checkbox" id="joy-inv-roll"> Invert Roll</label>
+                                <label class="check-label"><input type="checkbox" id="joy-inv-yaw"> Invert Yaw</label>
+                            </div>
+                        </div>
+
+                        <div class="tuning-section">
+                            <div class="section-title-row">
+                                <h3>🎮 EDIT CONTROL BUTTONS (KEYBINDINGS)</h3>
+                                <button id="btn-reset-keybinds" class="tool-btn danger"
+                                    style="padding: 4px 8px; font-size: 0.7rem;">Reset Defaults</button>
+                            </div>
+                            <p class="section-subtitle">Click any button below, then press a key to rebind</p>
+                            <div class="keybind-grid">
+                                <div class="keybind-row"><span class="kb-label">Throttle Up</span><button
+                                        class="keybind-btn" data-action="throttleUp">W</button></div>
+                                <div class="keybind-row"><span class="kb-label">Throttle Down</span><button
+                                        class="keybind-btn" data-action="throttleDown">S</button></div>
+                                <div class="keybind-row"><span class="kb-label">Yaw Left</span><button
+                                        class="keybind-btn" data-action="yawLeft">A</button></div>
+                                <div class="keybind-row"><span class="kb-label">Yaw Right</span><button
+                                        class="keybind-btn" data-action="yawRight">D</button></div>
+                                <div class="keybind-row"><span class="kb-label">Pitch Forward</span><button
+                                        class="keybind-btn" data-action="pitchForward">↑</button></div>
+                                <div class="keybind-row"><span class="kb-label">Pitch Backward</span><button
+                                        class="keybind-btn" data-action="pitchBackward">↓</button></div>
+                                <div class="keybind-row"><span class="kb-label">Roll Left</span><button
+                                        class="keybind-btn" data-action="rollLeft">←</button></div>
+                                <div class="keybind-row"><span class="kb-label">Roll Right</span><button
+                                        class="keybind-btn" data-action="rollRight">→</button></div>
+                                <div class="keybind-row"><span class="kb-label">Air Brake</span><button
+                                        class="keybind-btn" data-action="brake">SPACE</button></div>
+                                <div class="keybind-row"><span class="kb-label">Cycle Camera</span><button
+                                        class="keybind-btn" data-action="camera">C</button></div>
+                                <div class="keybind-row"><span class="kb-label">Cycle Flight Mode</span><button
+                                        class="keybind-btn" data-action="mode">M</button></div>
+                                <div class="keybind-row"><span class="kb-label">Toggle Sandbox Builder</span><button
+                                        class="keybind-btn" data-action="editor">E</button></div>
+                                <div class="keybind-row"><span class="kb-label">Reset Position</span><button
+                                        class="keybind-btn" data-action="reset">R</button></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="action-btn primary btn-close-modal" data-modal="modal-settings">Apply & Save</button>
+                    <div class="modal-footer">
+                        <button class="action-btn primary btn-close-modal" data-modal="modal-settings">Apply &
+                            Save</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- MODAL: Controls & Flight Help -->
-        <div id="modal-help" class="modal-overlay hidden">
-            <div class="modal-card wide">
-                <div class="modal-header">
-                    <h2>🎮 CONTROLS & FLIGHT MANUAL</h2>
-                    <button class="btn-close-modal" data-modal="modal-help">✖</button>
-                </div>
-                <div class="modal-body">
-                    <div class="controls-grid">
-                        <div class="control-box">
-                            <h3>⌨️ Keyboard Flight Controls</h3>
-                            <ul>
-                                <li><kbd>W</kbd> / <kbd>S</kbd> : Throttle Up / Down</li>
-                                <li><kbd>A</kbd> / <kbd>D</kbd> : Yaw Left / Right</li>
-                                <li><kbd>↑</kbd> / <kbd>↓</kbd> : Pitch Forward / Backward</li>
-                                <li><kbd>←</kbd> / <kbd>→</kbd> : Roll Left / Right</li>
-                                <li><kbd>Space</kbd> : Air Brake / Emergency Hover</li>
-                                <li><kbd>C</kbd> : Cycle Camera (FPV, Chase, Orbit, Top)</li>
-                                <li><kbd>M</kbd> : Cycle Flight Mode (Stabilized / Acro / Hover)</li>
-                                <li><kbd>E</kbd> : Toggle Track Builder Mode</li>
-                                <li><kbd>R</kbd> : Reset Drone Position</li>
-                            </ul>
-                        </div>
-                        <div class="control-box">
-                            <h3>🛠️ Track Builder Sandbox Controls</h3>
-                            <ul>
-                                <li><strong>Left Click Item</strong> : Select prop from palette</li>
-                                <li><strong>Click 3D Ground</strong> : Place selected prop</li>
-                                <li><strong>Click Object</strong> : Select prop in 3D scene</li>
-                                <li><kbd>R</kbd> : Rotate selected prop 45°</li>
-                                <li><kbd>↑</kbd> / <kbd>↓</kbd> or Buttons : Adjust prop height</li>
-                                <li><kbd>Delete</kbd> : Delete selected prop</li>
-                                <li><strong>Drag RMB</strong> : Orbit Editor Camera</li>
-                            </ul>
+            <!-- MODAL: Controls & Flight Help -->
+            <div id="modal-help" class="modal-overlay hidden">
+                <div class="modal-card wide">
+                    <div class="modal-header">
+                        <h2>🎮 CONTROLS & FLIGHT MANUAL</h2>
+                        <button class="btn-close-modal" data-modal="modal-help">✖</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="controls-grid">
+                            <div class="control-box">
+                                <h3>⌨️ Keyboard Flight Controls</h3>
+                                <ul>
+                                    <li><kbd>W</kbd> / <kbd>S</kbd> : Throttle Up / Down</li>
+                                    <li><kbd>A</kbd> / <kbd>D</kbd> : Yaw Left / Right</li>
+                                    <li><kbd>↑</kbd> / <kbd>↓</kbd> : Pitch Forward / Backward</li>
+                                    <li><kbd>←</kbd> / <kbd>→</kbd> : Roll Left / Right</li>
+                                    <li><kbd>Space</kbd> : Air Brake / Emergency Hover</li>
+                                    <li><kbd>C</kbd> : Cycle Camera (FPV, Chase, Orbit, Top)</li>
+                                    <li><kbd>M</kbd> : Cycle Flight Mode (Stabilized / Acro / Hover)</li>
+                                    <li><kbd>E</kbd> : Toggle Track Builder Mode</li>
+                                    <li><kbd>R</kbd> : Reset Drone Position</li>
+                                </ul>
+                            </div>
+                            <div class="control-box">
+                                <h3>🛠️ Track Builder Sandbox Controls</h3>
+                                <ul>
+                                    <li><strong>Left Click Item</strong> : Select prop from palette</li>
+                                    <li><strong>Click 3D Ground</strong> : Place selected prop</li>
+                                    <li><strong>Click Object</strong> : Select prop in 3D scene</li>
+                                    <li><kbd>R</kbd> : Rotate selected prop 45°</li>
+                                    <li><kbd>↑</kbd> / <kbd>↓</kbd> or Buttons : Adjust prop height</li>
+                                    <li><kbd>Delete</kbd> : Delete selected prop</li>
+                                    <li><strong>Drag RMB</strong> : Orbit Editor Camera</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="action-btn primary btn-close-modal" data-modal="modal-help">Got It!</button>
+                    <div class="modal-footer">
+                        <button class="action-btn primary btn-close-modal" data-modal="modal-help">Got It!</button>
+                    </div>
                 </div>
             </div>
+
+            <!-- Toast Notifications Container -->
+            <div id="toast-container"></div>
         </div>
 
-        <!-- Toast Notifications Container -->
-        <div id="toast-container"></div>
-    </div>
-
-    <!-- Main Entry Module -->
-    <script type="module" src="js/app.js"></script>
+        <!-- Main Entry Module -->
+        <script type="module" src="js/app.js"></script>
 </body>
+
 </html>

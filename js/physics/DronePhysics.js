@@ -32,6 +32,8 @@ export class DronePhysics {
 
         // Hover height lock state
         this.targetAltitude = 1.5;
+        this.yawTargetAltitude = null;
+        this.isYawingActive = false;
 
         // Reset mesh position
         this.mesh.position.copy(this.position);
@@ -44,6 +46,8 @@ export class DronePhysics {
         this.angularVelocity.set(0, 0, 0);
         this.motorPowers = [0.25, 0.25, 0.25, 0.25];
         this.targetAltitude = y;
+        this.yawTargetAltitude = null;
+        this.isYawingActive = false;
         this.mesh.position.copy(this.position);
         this.mesh.quaternion.copy(this.quaternion);
         this.pidRoll.reset();
@@ -66,6 +70,25 @@ export class DronePhysics {
         const rollInput = inputs.roll;         // -1.0 to +1.0
         const pitchInput = inputs.pitch;       // -1.0 to +1.0
         const yawInput = inputs.yaw;           // -1.0 to +1.0
+
+        // Yaw Altitude Static Hold logic
+        const isYawing = Math.abs(yawInput) > 0.01;
+        if (isYawing) {
+            if (!this.isYawingActive || this.yawTargetAltitude === null) {
+                this.isYawingActive = true;
+                this.yawTargetAltitude = this.position.y;
+            }
+            if (Math.abs(throttleInput - 0.5) <= 0.08) {
+                this.targetAltitude = this.yawTargetAltitude;
+                this.velocity.y *= 0.8;
+                this.position.y = THREE.MathUtils.lerp(this.position.y, this.yawTargetAltitude, 0.25);
+            } else {
+                this.yawTargetAltitude = this.position.y;
+            }
+        } else {
+            this.isYawingActive = false;
+            this.yawTargetAltitude = null;
+        }
 
         // Calculate Target Angles/Rates based on Flight Mode
         let targetRollRate = 0;
@@ -103,8 +126,10 @@ export class DronePhysics {
 
         let baseThrust = hoverThrustPerMotor;
 
-        if (this.flightMode === 'HOVER') {
-            baseThrust = hoverThrustPerMotor + (this.targetAltitude - this.position.y) * 2.0;
+        if (this.flightMode === 'HOVER' || (isYawing && Math.abs(throttleInput - 0.5) <= 0.08)) {
+            const altLockTarget = (isYawing && this.yawTargetAltitude !== null) ? this.yawTargetAltitude : this.targetAltitude;
+            const altCorrection = this.pidAltitude.update(altLockTarget, this.position.y, delta);
+            baseThrust = hoverThrustPerMotor + altCorrection * 0.25 + (altLockTarget - this.position.y) * 2.5;
         } else {
             if (throttleInput > 0.52) {
                 const climbRatio = (throttleInput - 0.5) / 0.5;
@@ -116,6 +141,12 @@ export class DronePhysics {
                 baseThrust = hoverThrustPerMotor;
                 this.velocity.y *= 0.92;
             }
+        }
+
+        // Tilt compensation: compensate vertical thrust component when drone is tilted or rotating in yaw
+        const droneUpY = new THREE.Vector3(0, 1, 0).applyQuaternion(this.quaternion).y;
+        if (droneUpY > 0.25) {
+            baseThrust /= droneUpY;
         }
 
         const rollCorrection = targetRollRate * 0.25;
