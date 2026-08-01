@@ -3,9 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testt</title>
-    <meta name="description">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Drone Simulator</title>
+    <meta name="description" content="3D FPV Drone Flight Simulator with Track Builder Sandbox">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,8 +54,8 @@
                 <button id="btn-sound-toggle" class="icon-btn" title="Toggle Audio (M)">🔊</button>
                 <button id="btn-camera-toggle" class="icon-btn" title="Change Camera View (C)">📹 <span
                         id="cam-name">CHASE</span></button>
-                <button id="btn-settings-toggle" class="icon-btn" title="Settings & Drone Tuning">⚙️</button>
-                <button id="btn-help-toggle" class="icon-btn" title="Controls & Help (?)">❓</button>
+                <button id="btn-settings-toggle" class="icon-btn" title="Settings & Drone Tuning" onclick="if(window.app){window.app.openModal('modal-settings');}else{document.getElementById('modal-settings').classList.remove('hidden');}">⚙️</button>
+                <button id="btn-help-toggle" class="icon-btn" title="Controls & Help (?)" onclick="if(window.app){window.app.openModal('modal-help');}else{document.getElementById('modal-help').classList.remove('hidden');}">❓</button>
             </div>
         </header>
 

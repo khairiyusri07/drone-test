@@ -393,9 +393,9 @@ export class TrackEditor {
             start.rotation.y = Math.PI / 2;
 
             // 2. Section 1: "Slalom" (3 Slalom Poles spaced 1.0m apart)
-            this.placeObject('slalom', new THREE.Vector3(-1.5, 0, 2.0));
-            this.placeObject('slalom', new THREE.Vector3(-0.5, 0, 2.0));
-            this.placeObject('slalom', new THREE.Vector3(0.5, 0, 2.0));
+            this.placeObject('pole_1m', new THREE.Vector3(-1.5, 0, 2.0));
+            this.placeObject('pole_1m', new THREE.Vector3(-0.5, 0, 2.0));
+            this.placeObject('pole_1m', new THREE.Vector3(0.5, 0, 2.0));
 
             // 3. Section 2: "Forward Up & Under" Gate Frame (1m x 1m) at (+1.5m, +2.0m)
             const fwdGate = this.placeObject('gate_1m', new THREE.Vector3(1.5, 0, 2.0));
@@ -405,8 +405,8 @@ export class TrackEditor {
             this.placeObject('helipad', new THREE.Vector3(2.0, 0, 2.0));
 
             // 5. Section 4: "Figure of 8" Weaving Slalom Poles along right side at (+2.0m, +1.0m) and (+2.0m, 0.0m)
-            this.placeObject('slalom', new THREE.Vector3(2.0, 0, 1.0));
-            this.placeObject('slalom', new THREE.Vector3(2.0, 0, 0.0));
+            this.placeObject('pole_1m', new THREE.Vector3(2.0, 0, 1.0));
+            this.placeObject('pole_1m', new THREE.Vector3(2.0, 0, 0.0));
 
             // 6. Section 5: "Through the Tunnel" at (+2.0m, -1.0m)
             const tunnel = this.placeObject('tunnel', new THREE.Vector3(2.0, 0, -1.0));

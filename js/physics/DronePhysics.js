@@ -30,7 +30,8 @@ export class DronePhysics {
         this.pidYaw = new PIDController(3.0, 0.02, 0.8);
         this.pidAltitude = new PIDController(3.5, 0.1, 1.5);
 
-        // Hover height lock state
+        // Hover height lock state & Self-Level Sensitivity
+        this.levelSensitivity = 8.0;
         this.targetAltitude = 1.5;
         this.yawTargetAltitude = null;
         this.isYawingActive = false;
@@ -101,7 +102,7 @@ export class DronePhysics {
         const currentPitch = euler.x;
 
         if (this.flightMode === 'STABILIZED') {
-            const maxTilt = THREE.MathUtils.degToRad(40);
+            const maxTilt = THREE.MathUtils.degToRad(this.levelSensitivity ? (this.levelSensitivity * 5) : 40);
             const targetRollAngle = -rollInput * maxTilt;
             const targetPitchAngle = pitchInput * maxTilt;
 

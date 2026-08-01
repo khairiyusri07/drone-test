@@ -125,20 +125,15 @@ export class TrackObjectFactory {
 
     // 3. SLALOM POLE (Real World Height = 1.5m)
     static buildSlalom(group) {
-        const poleGeo = new THREE.CylinderGeometry(0.025, 0.025, 1.5, 16);
+        const poleGeo = new THREE.CylinderGeometry(0.025, 0.025, 1, 16);
         const poleMat = new THREE.MeshStandardMaterial({ color: 0xffe600, emissive: 0xffe600, emissiveIntensity: 0.8 });
         const pole = new THREE.Mesh(poleGeo, poleMat);
         pole.position.y = 0.75;
         group.add(pole);
 
-        // Flag Banner (30cm x 20cm)
-        const flagGeo = new THREE.PlaneGeometry(0.35, 0.25);
-        const flagMat = new THREE.MeshStandardMaterial({ color: 0xff0055, side: THREE.DoubleSide });
-        const flag = new THREE.Mesh(flagGeo, flagMat);
-        flag.position.set(0.18, 1.35, 0);
-        group.add(flag);
+
         group.userData.radius = 0.2;
-        group.userData.height = 1.5;
+        group.userData.height = 1;
     }
 
     // 4. NEON GATE RING (1.2m Diameter Checkpoint Ring)

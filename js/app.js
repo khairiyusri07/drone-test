@@ -18,7 +18,8 @@ class Application {
         // 2. Initialize Environment
         this.environment = new EnvironmentManager(this.sceneManager);
         this.environment.loadEnvironment('school_hall');
-        document.getElementById('stat-env-name').innerText = "SCHOOL HALL";
+        const envStat = document.getElementById('stat-env-name');
+        if (envStat) envStat.innerText = "SCHOOL HALL";
 
         // 3. Initialize Audio
         this.audio = new AudioEngine();
@@ -139,36 +140,69 @@ class Application {
     }
 
     setupUIListeners() {
+        const on = (id, evt, fn) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(evt, fn);
+        };
+
         // Mode Switch Buttons
-        document.getElementById('btn-mode-fly').addEventListener('click', () => this.setMode('FLY'));
-        document.getElementById('btn-mode-build').addEventListener('click', () => this.setMode('BUILD'));
-        document.getElementById('btn-playtest-track').addEventListener('click', () => this.setMode('FLY'));
+        on('btn-mode-fly', 'click', () => this.setMode('FLY'));
+        on('btn-mode-build', 'click', () => this.setMode('BUILD'));
+        on('btn-playtest-track', 'click', () => this.setMode('FLY'));
 
         // Sound Toggle
-        document.getElementById('btn-sound-toggle').addEventListener('click', () => {
+        on('btn-sound-toggle', 'click', () => {
             this.audio.init();
             const muted = this.audio.toggleMute();
-            document.getElementById('btn-sound-toggle').innerText = muted ? "🔇" : "🔊";
+            const btn = document.getElementById('btn-sound-toggle');
+            if (btn) btn.innerText = muted ? "🔇" : "🔊";
         });
 
         // Camera Toggle Header Button
-        document.getElementById('btn-camera-toggle').addEventListener('click', () => {
+        on('btn-camera-toggle', 'click', () => {
             if (this.input.onCameraToggle) this.input.onCameraToggle();
         });
 
-        // Modals Toggle
-        document.getElementById('btn-settings-toggle').addEventListener('click', () => {
-            document.getElementById('modal-settings').classList.remove('hidden');
-        });
-        document.getElementById('btn-help-toggle').addEventListener('click', () => {
-            document.getElementById('modal-help').classList.remove('hidden');
-        });
+        // Modals Toggle & Dismiss Handlers
+        const btnSettings = document.getElementById('btn-settings-toggle');
+        if (btnSettings) {
+            btnSettings.addEventListener('click', () => {
+                this.syncSettingsUI();
+                const modal = document.getElementById('modal-settings');
+                if (modal) modal.classList.remove('hidden');
+            });
+        }
+
+        const btnHelp = document.getElementById('btn-help-toggle');
+        if (btnHelp) {
+            btnHelp.addEventListener('click', () => {
+                const modal = document.getElementById('modal-help');
+                if (modal) modal.classList.remove('hidden');
+            });
+        }
 
         document.querySelectorAll('.btn-close-modal').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', () => {
                 const modalId = btn.getAttribute('data-modal');
-                if (modalId) document.getElementById(modalId).classList.add('hidden');
+                if (modalId) {
+                    const modal = document.getElementById(modalId);
+                    if (modal) modal.classList.add('hidden');
+                }
             });
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.add('hidden');
+                }
+            });
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(modal => modal.classList.add('hidden'));
+            }
         });
 
         // Track Builder Object Palette Buttons
@@ -220,11 +254,11 @@ class Application {
         }
 
         // Editor Action Buttons
-        document.getElementById('btn-rotate-item').addEventListener('click', () => this.trackEditor.rotateSelected());
-        document.getElementById('btn-elevate-up').addEventListener('click', () => this.trackEditor.elevateSelected(0.5));
-        document.getElementById('btn-elevate-down').addEventListener('click', () => this.trackEditor.elevateSelected(-0.5));
-        document.getElementById('btn-delete-item').addEventListener('click', () => this.trackEditor.deleteSelected());
-        document.getElementById('btn-clear-track').addEventListener('click', () => {
+        on('btn-rotate-item', 'click', () => this.trackEditor.rotateSelected());
+        on('btn-elevate-up', 'click', () => this.trackEditor.elevateSelected(0.5));
+        on('btn-elevate-down', 'click', () => this.trackEditor.elevateSelected(-0.5));
+        on('btn-delete-item', 'click', () => this.trackEditor.deleteSelected());
+        on('btn-clear-track', 'click', () => {
             this.trackEditor.clearTrack();
             this.showToast("Track cleared");
         });
@@ -239,17 +273,17 @@ class Application {
         });
 
         // Save & Load File Actions
-        document.getElementById('btn-save-local').addEventListener('click', () => {
+        on('btn-save-local', 'click', () => {
             this.trackEditor.saveToLocalStorage();
             this.showToast("💾 Saved track to LocalStorage!");
         });
 
-        document.getElementById('btn-load-local').addEventListener('click', () => {
+        on('btn-load-local', 'click', () => {
             const success = this.trackEditor.loadFromLocalStorage();
             this.showToast(success ? "📂 Loaded track from LocalStorage!" : "No saved track found!");
         });
 
-        document.getElementById('btn-export-json').addEventListener('click', () => {
+        on('btn-export-json', 'click', () => {
             const json = this.trackEditor.exportToJSON();
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -261,11 +295,12 @@ class Application {
             this.showToast("📤 Exported JSON file!");
         });
 
-        document.getElementById('btn-import-trigger').addEventListener('click', () => {
-            document.getElementById('file-import-json').click();
+        on('btn-import-trigger', 'click', () => {
+            const inp = document.getElementById('file-import-json');
+            if (inp) inp.click();
         });
 
-        document.getElementById('file-import-json').addEventListener('change', (e) => {
+        on('file-import-json', 'change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -278,18 +313,67 @@ class Application {
         });
 
         // Settings Modal Controls
-        document.getElementById('setting-env-select').addEventListener('change', (e) => {
-            const env = e.target.value;
-            this.environment.loadEnvironment(env);
-            document.getElementById('stat-env-name').innerText = env.toUpperCase();
-            this.showToast(`Environment: ${env.toUpperCase()}`);
-        });
+        const envSelect = document.getElementById('setting-env-select');
+        if (envSelect) {
+            envSelect.addEventListener('change', (e) => {
+                const env = e.target.value;
+                this.environment.loadEnvironment(env);
+                const envStat = document.getElementById('stat-env-name');
+                if (envStat) envStat.innerText = env.toUpperCase().replace('_', ' ');
+                this.showToast(`Environment: ${env.toUpperCase().replace('_', ' ')}`);
+            });
+        }
 
-        document.getElementById('setting-drone-model').addEventListener('change', (e) => {
-            const modelType = e.target.value;
-            this.droneModel.buildDrone(modelType);
-            this.showToast(`Drone Model: ${modelType.toUpperCase()}`);
-        });
+        const droneSelect = document.getElementById('setting-drone-model');
+        if (droneSelect) {
+            droneSelect.addEventListener('change', (e) => {
+                const modelType = e.target.value;
+                this.droneModel.buildDrone(modelType);
+                this.showToast(`Drone Model: ${modelType.toUpperCase()}`);
+            });
+        }
+
+        const flightModeSelect = document.getElementById('setting-flight-mode');
+        if (flightModeSelect) {
+            flightModeSelect.addEventListener('change', (e) => {
+                const mode = e.target.value;
+                this.physics.flightMode = mode;
+                const modeStat = document.getElementById('stat-flight-mode');
+                if (modeStat) modeStat.innerText = mode;
+                this.showToast(`Flight Mode: ${mode}`);
+            });
+        }
+
+        const windSlider = document.getElementById('setting-wind-slider');
+        const windDisp = document.getElementById('val-wind-disp');
+        if (windSlider) {
+            windSlider.addEventListener('input', (e) => {
+                const windSpeed = parseFloat(e.target.value);
+                if (windDisp) windDisp.innerText = `${windSpeed} km/h`;
+                this.physics.setWind(windSpeed);
+            });
+        }
+
+        const pidP = document.getElementById('pid-p');
+        const pidPVal = document.getElementById('pid-p-val');
+        if (pidP) {
+            pidP.addEventListener('input', (e) => {
+                const pVal = parseFloat(e.target.value);
+                if (pidPVal) pidPVal.innerText = pVal.toFixed(1);
+                this.physics.pidRoll.kp = pVal;
+                this.physics.pidPitch.kp = pVal;
+            });
+        }
+
+        const pidLevel = document.getElementById('pid-level');
+        const pidLevelVal = document.getElementById('pid-level-val');
+        if (pidLevel) {
+            pidLevel.addEventListener('input', (e) => {
+                const levelVal = parseFloat(e.target.value);
+                if (pidLevelVal) pidLevelVal.innerText = levelVal.toFixed(1);
+                this.physics.levelSensitivity = levelVal;
+            });
+        }
 
         // Keybindings Configurator Event Handlers
         this.updateKeybindUI();
@@ -325,28 +409,30 @@ class Application {
         this.setupTouchJoysticks();
         this.updateJoystickUI();
 
-        document.getElementById('joy-mode-select').addEventListener('change', (e) => {
+        on('joy-mode-select', 'change', (e) => {
             this.input.joystickSettings.mode = parseInt(e.target.value);
             this.input.saveSettings();
             this.updateJoystickUI();
             this.showToast(`Joystick Mode: ${e.target.value === '1' ? 'Mode 1' : 'Mode 2'}`);
         });
 
-        document.getElementById('joy-expo-slider').addEventListener('input', (e) => {
+        on('joy-expo-slider', 'input', (e) => {
             const val = parseFloat(e.target.value);
             this.input.joystickSettings.expo = val;
-            document.getElementById('joy-expo-val').innerText = val.toFixed(2);
+            const disp = document.getElementById('joy-expo-val');
+            if (disp) disp.innerText = val.toFixed(2);
             this.input.saveSettings();
         });
 
-        document.getElementById('joy-deadzone-slider').addEventListener('input', (e) => {
+        on('joy-deadzone-slider', 'input', (e) => {
             const val = parseFloat(e.target.value);
             this.input.joystickSettings.deadzone = val;
-            document.getElementById('joy-deadzone-val').innerText = val.toFixed(2);
+            const disp = document.getElementById('joy-deadzone-val');
+            if (disp) disp.innerText = val.toFixed(2);
             this.input.saveSettings();
         });
 
-        document.getElementById('joy-show-touch').addEventListener('change', (e) => {
+        on('joy-show-touch', 'change', (e) => {
             const val = e.target.value;
             const container = document.getElementById('touch-joysticks-container');
             if (container) {
@@ -356,17 +442,20 @@ class Application {
         });
 
         const bindCheck = (id, prop) => {
-            document.getElementById(id).addEventListener('change', (e) => {
-                this.input.joystickSettings[prop] = e.target.checked;
-                this.input.saveSettings();
-            });
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', (e) => {
+                    this.input.joystickSettings[prop] = e.target.checked;
+                    this.input.saveSettings();
+                });
+            }
         };
         bindCheck('joy-inv-throt', 'invertThrottle');
         bindCheck('joy-inv-pitch', 'invertPitch');
         bindCheck('joy-inv-roll', 'invertRoll');
         bindCheck('joy-inv-yaw', 'invertYaw');
 
-        document.getElementById('btn-reset-joystick').addEventListener('click', () => {
+        on('btn-reset-joystick', 'click', () => {
             this.input.resetJoystickSettings();
             this.updateJoystickUI();
             this.showToast("Reset joystick settings to default!");
@@ -453,10 +542,14 @@ class Application {
             dzVal.innerText = parseFloat(s.deadzone).toFixed(2);
         }
 
-        document.getElementById('joy-inv-throt').checked = s.invertThrottle;
-        document.getElementById('joy-inv-pitch').checked = s.invertPitch;
-        document.getElementById('joy-inv-roll').checked = s.invertRoll;
-        document.getElementById('joy-inv-yaw').checked = s.invertYaw;
+        const setChk = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.checked = !!val;
+        };
+        setChk('joy-inv-throt', s.invertThrottle);
+        setChk('joy-inv-pitch', s.invertPitch);
+        setChk('joy-inv-roll', s.invertRoll);
+        setChk('joy-inv-yaw', s.invertYaw);
 
         const lLabel = document.getElementById('left-joy-label');
         const rLabel = document.getElementById('right-joy-label');
@@ -508,6 +601,58 @@ class Application {
         requestAnimationFrame(loop);
     }
 
+    openModal(id) {
+        if (id === 'modal-settings') {
+            this.syncSettingsUI();
+        }
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    syncSettingsUI() {
+        const envSelect = document.getElementById('setting-env-select');
+        if (envSelect && this.environment && this.environment.currentEnv) {
+            envSelect.value = this.environment.currentEnv;
+        }
+
+        const flightModeSelect = document.getElementById('setting-flight-mode');
+        if (flightModeSelect && this.physics) {
+            flightModeSelect.value = this.physics.flightMode;
+        }
+
+        const pidP = document.getElementById('pid-p');
+        const pidPVal = document.getElementById('pid-p-val');
+        if (pidP && pidPVal && this.physics && this.physics.pidRoll) {
+            pidP.value = this.physics.pidRoll.kp;
+            pidPVal.innerText = parseFloat(this.physics.pidRoll.kp).toFixed(1);
+        }
+
+        const pidLevel = document.getElementById('pid-level');
+        const pidLevelVal = document.getElementById('pid-level-val');
+        if (pidLevel && pidLevelVal && this.physics) {
+            pidLevel.value = this.physics.levelSensitivity || 8.0;
+            pidLevelVal.innerText = parseFloat(this.physics.levelSensitivity || 8.0).toFixed(1);
+        }
+
+        const windSlider = document.getElementById('setting-wind-slider');
+        const windDisp = document.getElementById('val-wind-disp');
+        if (windSlider && windDisp) {
+            windDisp.innerText = `${windSlider.value} km/h`;
+        }
+
+        this.updateKeybindUI();
+        this.updateJoystickUI();
+    }
+
     showToast(message) {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -523,7 +668,11 @@ class Application {
     }
 }
 
-// Instantiate on DOM Load
-window.addEventListener('DOMContentLoaded', () => {
-    new Application();
-});
+// Instantiate immediately or on DOM load (handles ES module race conditions)
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', () => {
+        window.app = new Application();
+    });
+} else {
+    window.app = new Application();
+}

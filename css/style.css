@@ -54,6 +54,7 @@ body, html {
     width: 100%;
     height: 100%;
     z-index: 1;
+    touch-action: none;
 }
 
 /* ==========================================================================
@@ -694,17 +695,18 @@ body, html {
    MODALS & TOAST NOTIFICATIONS
    ========================================================================== */
 .modal-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(4, 6, 14, 0.8);
-    backdrop-filter: blur(8px);
-    z-index: 200;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(4, 6, 14, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: auto;
 }
 
 .modal-card {
@@ -1037,3 +1039,383 @@ body, html {
 }
 
 
+/* ==========================================================================
+   MOBILE RESPONSIVE — BREAKPOINTS
+   ========================================================================== */
+
+/* ---- Tablet & small desktop (max 900px) ---- */
+@media (max-width: 900px) {
+    .logo-text {
+        font-size: 0.95rem;
+        letter-spacing: 1px;
+    }
+    .version-tag {
+        display: none;
+    }
+    .mode-btn {
+        font-size: 0.7rem;
+        padding: 6px 10px;
+    }
+    .left-panel {
+        width: 220px;
+    }
+    .right-panel {
+        width: 200px;
+    }
+}
+
+/* ---- Phone landscape + small tablet (max 768px) ---- */
+@media (max-width: 768px) {
+
+    /* === HEADER TOP BAR === */
+    #top-bar {
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        gap: 6px;
+    }
+
+    .brand {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .logo-text {
+        font-size: 0.8rem;
+        letter-spacing: 0px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+    }
+
+    .mode-switcher {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        padding: 3px;
+    }
+
+    .mode-btn {
+        flex: 1;
+        justify-content: center;
+        font-size: 0.65rem;
+        padding: 6px 6px;
+        gap: 4px;
+    }
+
+    .top-controls {
+        gap: 6px;
+    }
+
+    .icon-btn {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+    }
+
+    /* Hide camera label text on mobile, keep icon */
+    #cam-name {
+        display: none;
+    }
+
+    /* === HUD ELEMENTS === */
+    .top-left-hud {
+        top: auto;
+        bottom: 210px;
+        left: 8px;
+        min-width: 130px;
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .top-right-hud {
+        top: auto;
+        bottom: 210px;
+        right: 8px;
+        padding: 8px 10px;
+        gap: 10px;
+    }
+
+    .gauge-value {
+        font-size: 1.1rem;
+    }
+
+    .telemetry-gauge {
+        min-width: 48px;
+    }
+
+    .gauge-divider {
+        height: 28px;
+    }
+
+    .race-banner {
+        top: auto;
+        bottom: 210px;
+        gap: 10px;
+        padding: 6px 10px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .race-timer {
+        font-size: 1.1rem;
+    }
+
+    /* Hide motor RPM bars on phone (too small) */
+    .bottom-left-hud {
+        display: none;
+    }
+
+    /* Shrink radar */
+    .bottom-right-hud {
+        bottom: 210px;
+        right: 8px;
+        padding: 6px;
+    }
+
+    #radar-canvas {
+        width: 90px;
+        height: 90px;
+    }
+
+    /* Center horizon canvas smaller */
+    #horizon-canvas {
+        width: 200px;
+        height: 200px;
+    }
+
+    /* === TOUCH JOYSTICKS === */
+    .touch-joysticks-container {
+        bottom: 16px;
+        height: 160px;
+        padding: 0 16px;
+    }
+
+    .joystick-base {
+        width: 120px;
+        height: 120px;
+    }
+
+    .joystick-stick {
+        width: 42px;
+        height: 42px;
+    }
+
+    /* === EDITOR PANELS === */
+    /* Left palette: slides up from bottom as a horizontal scrolling strip */
+    .left-panel {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: 190px;
+        border-radius: 12px 12px 0 0;
+        flex-direction: column;
+    }
+
+    .object-list {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        max-height: 130px;
+        padding: 8px;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .palette-item {
+        flex-direction: column;
+        align-items: center;
+        min-width: 80px;
+        max-width: 80px;
+        padding: 8px 4px;
+        text-align: center;
+        gap: 4px;
+    }
+
+    .item-desc {
+        display: none;
+    }
+
+    .item-name {
+        font-size: 0.65rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 72px;
+    }
+
+    /* Right panel: side panel */
+    .right-panel {
+        top: 56px;
+        right: 0;
+        width: 180px;
+        border-radius: 0 0 0 12px;
+        max-height: calc(100vh - 56px);
+        overflow-y: auto;
+        padding: 10px;
+        gap: 8px;
+    }
+
+    /* Top editor toolbar: scrollable row */
+    .editor-tools-top {
+        top: 56px;
+        left: 0;
+        right: 190px;
+        transform: none;
+        border-radius: 0;
+        padding: 6px 8px;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .tool-btn {
+        font-size: 0.7rem;
+        padding: 5px 8px;
+        white-space: nowrap;
+    }
+
+    /* === MODALS === */
+    .modal-card {
+        width: 95vw;
+        max-height: 90vh;
+        margin: 0 auto;
+    }
+
+    .modal-card.wide {
+        width: 95vw;
+    }
+
+    .modal-body {
+        padding: 14px;
+        max-height: 75vh;
+        gap: 12px;
+    }
+
+    .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .keybind-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .invert-checkbox-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* === TOAST === */
+    #toast-container {
+        bottom: 210px;
+        width: 90%;
+    }
+}
+
+/* ---- Small phones (max 480px) ---- */
+@media (max-width: 480px) {
+    .logo-text {
+        display: none;
+    }
+
+    .logo-icon {
+        font-size: 1.3rem;
+    }
+
+    .mode-btn {
+        font-size: 0.6rem;
+        padding: 5px 5px;
+    }
+
+    .mode-btn .btn-icon {
+        font-size: 0.9rem;
+    }
+
+    /* Very small phones — hide race banner extra info */
+    .checkpoint-counter,
+    .best-lap {
+        display: none;
+    }
+
+    .top-left-hud {
+        bottom: 195px;
+        min-width: 110px;
+    }
+
+    .top-right-hud {
+        bottom: 195px;
+    }
+
+    .bottom-right-hud {
+        bottom: 195px;
+    }
+
+    #radar-canvas {
+        width: 70px;
+        height: 70px;
+    }
+
+    #horizon-canvas {
+        width: 160px;
+        height: 160px;
+    }
+
+    .touch-joysticks-container {
+        height: 140px;
+        padding: 0 10px;
+        bottom: 12px;
+    }
+
+    .joystick-base {
+        width: 100px;
+        height: 100px;
+    }
+
+    .joystick-stick {
+        width: 36px;
+        height: 36px;
+    }
+
+    .joy-label {
+        font-size: 0.55rem;
+        bottom: -20px;
+    }
+
+    .modal-header h2 {
+        font-size: 0.8rem;
+    }
+
+    .modal-body {
+        padding: 10px;
+        gap: 10px;
+    }
+}
+
+/* ---- Touch & tap improvements for all mobile ---- */
+@media (pointer: coarse) {
+    .icon-btn,
+    .mode-btn,
+    .tool-btn,
+    .action-btn,
+    .preset-btn,
+    .palette-item,
+    .btn-close-modal,
+    .keybind-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .setting-group select {
+        min-height: 44px;
+        font-size: 1rem;
+    }
+
+    .slider-row input[type="range"] {
+        height: 28px;
+    }
+}
