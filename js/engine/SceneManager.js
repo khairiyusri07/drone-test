@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 export class SceneManager {
     constructor(canvasElement) {
         this.canvas = canvasElement;
-        
+
         // 1. Create Scene with Bright Neutral Hall Background
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x252e42);
@@ -26,7 +26,7 @@ export class SceneManager {
 
         // 3. Create Camera Modes
         this.activeCameraMode = 'CHASE'; // 'FPV', 'CHASE', 'ORBIT', 'BUILDER'
-        
+
         // Main Perspective Camera
         this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.05, 500);
         this.camera.position.set(0, 2.5, 4.0);
@@ -106,7 +106,7 @@ export class SceneManager {
             this.camera.quaternion.copy(finalQuat);
         } else if (this.activeCameraMode === 'CHASE') {
             // Chase camera 1.2m behind (+Z) and 0.4m above Tello drone
-            const idealOffset = new THREE.Vector3(0, 0.4, 1.2);
+            const idealOffset = new THREE.Vector3(0, 0.4, -1.2);
             idealOffset.applyQuaternion(droneQuaternion);
             const targetCamPos = dronePos.clone().add(idealOffset);
 
