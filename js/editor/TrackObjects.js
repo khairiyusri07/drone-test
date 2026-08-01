@@ -158,33 +158,89 @@ export class TrackObjectFactory {
         group.userData.radius = 0.6;
     }
 
-    // 5. HEXAGONAL TUNNEL (1.0m Diameter, 1.5m Length)
+    // 5. RECTANGULAR TUNNEL FRAME (50cm x 50cm x 50cm)
+    // Front view: 4 red corner posts + 2 yellow top crossbars
+    // Open front & back — drone flies through
     static buildTunnel(group) {
-        const shape = new THREE.Shape();
-        const sides = 6;
-        const radius = 0.5;
-
-        for (let i = 0; i < sides; i++) {
-            const angle = (i * Math.PI * 2) / sides;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            if (i === 0) shape.moveTo(x, y);
-            else shape.lineTo(x, y);
-        }
-
-        const extrudeSettings = { depth: 1.5, bevelEnabled: false, steps: 1 };
-        const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-        const mat = new THREE.MeshStandardMaterial({
-            color: 0x9d4edd,
-            emissive: 0x9d4edd,
-            emissiveIntensity: 0.8,
-            wireframe: true
+        const postMat = new THREE.MeshStandardMaterial({
+            color: 0xff0033,
+            emissive: 0xff0033,
+            emissiveIntensity: 0.7,
+            roughness: 0.3
+        });
+        const barMat = new THREE.MeshStandardMaterial({
+            color: 0xffe600,
+            emissive: 0xffe600,
+            emissiveIntensity: 1.0,
+            roughness: 0.2
         });
 
-        const tunnel = new THREE.Mesh(geom, mat);
-        tunnel.position.set(0, 0.6, -0.75);
-        group.add(tunnel);
-        group.userData.radius = 0.5;
+        const POST_R = 0.025;   // 2.5cm radius (5cm diameter)
+        const W = 0.5;          // 50cm width (left-right)
+        const H = 1;          // 50cm height
+        const D = 1;          // 50cm depth (front-back)
+        const BAR_T = 0.03;     // bar cross-section thickness
+
+        // ── 4 Vertical Corner Posts ──────────────────────────────────────
+        const postGeo = new THREE.CylinderGeometry(POST_R, POST_R, H, 12);
+        const corners = [
+            [-W / 2, D / 2],   // front-left
+            [W / 2, D / 2],   // front-right
+            [-W / 2, -D / 2],   // back-left
+            [W / 2, -D / 2],   // back-right
+        ];
+        corners.forEach(([x, z]) => {
+            const post = new THREE.Mesh(postGeo, postMat);
+            post.position.set(x, H / 2, z);
+            post.castShadow = true;
+            group.add(post);
+        });
+
+        // ── Top Crossbars (Yellow) ────────────────────────────────────────
+        // Left-right bar at FRONT (z = +D/2, y = H)
+        const lrBarGeo = new THREE.BoxGeometry(W + POST_R * 2, BAR_T, BAR_T);
+        const topFront = new THREE.Mesh(lrBarGeo, barMat);
+        topFront.position.set(0, H, D / 2);
+        group.add(topFront);
+
+        // Left-right bar at BACK (z = -D/2, y = H)
+        const topBack = new THREE.Mesh(lrBarGeo, barMat);
+        topBack.position.set(0, H, -D / 2);
+        group.add(topBack);
+
+        // Front-back bar at LEFT (x = -W/2, y = H)
+        const fbBarGeo = new THREE.BoxGeometry(BAR_T, BAR_T, D + POST_R * 2);
+        const topLeft = new THREE.Mesh(fbBarGeo, barMat);
+        topLeft.position.set(-W / 2, H, 0);
+        group.add(topLeft);
+
+        // Front-back bar at RIGHT (x = +W/2, y = H)
+        const topRight = new THREE.Mesh(fbBarGeo, barMat);
+        topRight.position.set(W / 2, H, 0);
+        group.add(topRight);
+
+        // ── Mid Crossbars (Yellow) — second row at H/2 ───────────────────
+        const midFront = new THREE.Mesh(lrBarGeo, barMat);
+        midFront.position.set(0, H / 2, D / 2);
+        group.add(midFront);
+
+        const midBack = new THREE.Mesh(lrBarGeo, barMat);
+        midBack.position.set(0, H / 2, -D / 2);
+        group.add(midBack);
+
+        const midLeft = new THREE.Mesh(fbBarGeo, barMat);
+        midLeft.position.set(-W / 2, H / 2, 0);
+        group.add(midLeft);
+
+        const midRight = new THREE.Mesh(fbBarGeo, barMat);
+        midRight.position.set(W / 2, H / 2, 0);
+        group.add(midRight);
+
+        // Metadata
+        group.userData.width = W;
+        group.userData.height = H;
+        group.userData.depth = D;
+        group.userData.radius = W / 2;
     }
 
     // 6. SPEED BOOST PAD
