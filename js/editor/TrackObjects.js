@@ -176,7 +176,7 @@ export class TrackObjectFactory {
         });
 
         const POST_R = 0.025;   // 2.5cm radius (5cm diameter)
-        const W = 0.5;          // 50cm width (left-right)
+        const W = 1;          // 50cm width (left-right)
         const H = 1;          // 50cm height
         const D = 1;          // 50cm depth (front-back)
         const BAR_T = 0.03;     // bar cross-section thickness

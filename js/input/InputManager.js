@@ -25,7 +25,8 @@ export class InputManager {
             camera: 'KeyC',
             mode: 'KeyM',
             editor: 'KeyE',
-            reset: 'KeyR'
+            reset: 'KeyR',
+            hud: 'KeyH'
         };
 
         // Default Joystick & Gamepad Calibration Settings (Inverted Pitch & Roll)
@@ -56,6 +57,7 @@ export class InputManager {
         // Event Callbacks
         this.onCameraToggle = null;
         this.onModeToggle = null;
+        this.onHUDToggle = null;
         this.onEditorToggle = null;
         this.onResetDrone = null;
         this.onRotateEditorItem = null;
@@ -138,6 +140,7 @@ export class InputManager {
 
         if (e.code === this.keyBindings.camera && this.onCameraToggle) this.onCameraToggle();
         if (e.code === this.keyBindings.mode && this.onModeToggle) this.onModeToggle();
+        if (e.code === this.keyBindings.hud && this.onHUDToggle) this.onHUDToggle();
         if (e.code === this.keyBindings.editor && this.onEditorToggle) this.onEditorToggle();
         if (e.code === this.keyBindings.reset && this.onResetDrone) this.onResetDrone();
         if (e.code === this.keyBindings.reset && this.onRotateEditorItem) this.onRotateEditorItem();

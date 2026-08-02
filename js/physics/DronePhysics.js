@@ -32,12 +32,17 @@ export class DronePhysics {
 
         // Hover height lock state & Self-Level Sensitivity
         this.levelSensitivity = 8.0;
+        this.speedMultiplier = 1.0; // Adjustable flight speed scale (0.2x to 3.0x)
         this.targetAltitude = 1.5;
         this.yawTargetAltitude = null;
         this.isYawingActive = false;
 
         // Reset mesh position
         this.mesh.position.copy(this.position);
+    }
+
+    setSpeedMultiplier(scale) {
+        this.speedMultiplier = Math.max(0.2, Math.min(3.0, parseFloat(scale) || 1.0));
     }
 
     resetPosition(x = 0, y = 1.5, z = 0) {
@@ -92,9 +97,10 @@ export class DronePhysics {
         }
 
         // Calculate Target Angles/Rates based on Flight Mode
+        const speedScale = this.speedMultiplier || 1.0;
         let targetRollRate = 0;
         let targetPitchRate = 0;
-        let targetYawRate = yawInput * 3.0; // rad/s
+        let targetYawRate = yawInput * 3.0 * speedScale; // rad/s scaled
 
         // Extract Current Euler Angles (Roll, Pitch, Yaw) from Quaternion
         const euler = new THREE.Euler().setFromQuaternion(this.quaternion, 'YXZ');
@@ -102,7 +108,8 @@ export class DronePhysics {
         const currentPitch = euler.x;
 
         if (this.flightMode === 'STABILIZED') {
-            const maxTilt = THREE.MathUtils.degToRad(this.levelSensitivity ? (this.levelSensitivity * 5) : 40);
+            const baseTiltDeg = this.levelSensitivity ? (this.levelSensitivity * 5) : 40;
+            const maxTilt = THREE.MathUtils.degToRad(baseTiltDeg * Math.min(2.0, Math.sqrt(speedScale)));
             const targetRollAngle = -rollInput * maxTilt;
             const targetPitchAngle = pitchInput * maxTilt;
 
@@ -110,20 +117,20 @@ export class DronePhysics {
             targetPitchRate = this.pidPitch.update(targetPitchAngle, currentPitch, delta);
         } else if (this.flightMode === 'HOVER') {
             if (Math.abs(throttleInput - 0.5) > 0.05) {
-                this.targetAltitude += (throttleInput - 0.5) * 5.0 * delta;
+                this.targetAltitude += (throttleInput - 0.5) * 5.0 * speedScale * delta;
                 this.targetAltitude = Math.max(0.5, Math.min(100, this.targetAltitude));
             }
             const altCorrection = this.pidAltitude.update(this.targetAltitude, this.position.y, delta);
-            targetRollRate = this.pidRoll.update(-rollInput * 0.3, currentRoll, delta);
-            targetPitchRate = this.pidPitch.update(pitchInput * 0.3, currentPitch, delta);
+            targetRollRate = this.pidRoll.update(-rollInput * 0.3 * speedScale, currentRoll, delta);
+            targetPitchRate = this.pidPitch.update(pitchInput * 0.3 * speedScale, currentPitch, delta);
         } else {
-            targetRollRate = -rollInput * Math.PI * 2;
-            targetPitchRate = pitchInput * Math.PI * 2;
+            targetRollRate = -rollInput * Math.PI * 2 * speedScale;
+            targetPitchRate = pitchInput * Math.PI * 2 * speedScale;
         }
 
         // Calculate Motor Thrust Mixing
         const hoverThrustPerMotor = (this.mass * this.gravity) / 4.0;
-        const maxClimbThrustPerMotor = (this.mass * this.gravity * 2.2) / 4.0;
+        const maxClimbThrustPerMotor = (this.mass * this.gravity * 2.2 * Math.sqrt(speedScale)) / 4.0;
 
         let baseThrust = hoverThrustPerMotor;
 
@@ -182,6 +189,10 @@ export class DronePhysics {
         const dragForce = totalVel.clone().multiplyScalar(-0.5 * 1.2 * 0.25 * totalVel.length());
 
         const netForce = new THREE.Vector3().add(thrustWorld).add(gravityWorld).add(dragForce);
+        // Scale horizontal force vectors directly by speedScale
+        netForce.x *= speedScale;
+        netForce.z *= speedScale;
+
         const acceleration = netForce.divideScalar(this.mass);
 
         this.velocity.addScaledVector(acceleration, delta);

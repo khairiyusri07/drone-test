@@ -41,11 +41,13 @@ class Application {
 
         // Application State
         this.currentMode = 'FLY'; // 'FLY' or 'BUILD'
+        this.hudMode = localStorage.getItem('aerox_hud_mode') || 'full';
         this.lastTime = performance.now();
 
         // Setup Event Handlers & Start Loop
         this.setupInputHandlers();
         this.setupUIListeners();
+        this.setHUDMode(this.hudMode);
         this.startLoop();
 
         this.showToast("Welcome to AeroX 3D Drone Simulator & Sandbox!");
@@ -100,6 +102,11 @@ class Application {
             const idx = modes.indexOf(this.physics.flightMode);
             this.physics.flightMode = modes[(idx + 1) % modes.length];
             this.showToast(`Flight Mode: ${this.physics.flightMode}`);
+        };
+
+        // Toggle HUD Visibility Mode (H key)
+        this.input.onHUDToggle = () => {
+            this.toggleHUDMode();
         };
 
         // Toggle Track Builder Sandbox Mode (E)
@@ -343,6 +350,47 @@ class Application {
                 this.showToast(`Flight Mode: ${mode}`);
             });
         }
+
+        const hudModeSelect = document.getElementById('setting-hud-mode');
+        if (hudModeSelect) {
+            hudModeSelect.addEventListener('change', (e) => {
+                this.setHUDMode(e.target.value);
+            });
+        }
+
+        const btnHudToggle = document.getElementById('btn-hud-toggle');
+        if (btnHudToggle) {
+            btnHudToggle.addEventListener('click', () => {
+                this.toggleHUDMode();
+            });
+        }
+
+        // Speed Toggle & Adjustment Handlers
+        const btnSpeedToggle = document.getElementById('btn-speed-toggle');
+        if (btnSpeedToggle) {
+            btnSpeedToggle.addEventListener('click', () => {
+                const speeds = [0.5, 1.0, 1.5, 2.0, 3.0];
+                const current = this.physics.speedMultiplier || 1.0;
+                let nextIdx = speeds.findIndex(s => Math.abs(s - current) < 0.1) + 1;
+                if (nextIdx >= speeds.length) nextIdx = 0;
+                this.updateSpeedMultiplier(speeds[nextIdx]);
+            });
+        }
+
+        const speedSlider = document.getElementById('setting-speed-slider');
+        if (speedSlider) {
+            speedSlider.addEventListener('input', (e) => {
+                const speedScale = parseFloat(e.target.value);
+                this.updateSpeedMultiplier(speedScale);
+            });
+        }
+
+        document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const speedScale = parseFloat(btn.getAttribute('data-speed'));
+                this.updateSpeedMultiplier(speedScale);
+            });
+        });
 
         const windSlider = document.getElementById('setting-wind-slider');
         const windDisp = document.getElementById('val-wind-disp');
@@ -618,6 +666,64 @@ class Application {
         }
     }
 
+    setHUDMode(mode) {
+        const container = document.getElementById('hud-overlay');
+        if (!container) return;
+
+        container.classList.remove('hud-hidden', 'hud-minimal');
+
+        if (mode === 'hidden') {
+            container.classList.add('hud-hidden');
+        } else if (mode === 'minimal') {
+            container.classList.add('hud-minimal');
+        }
+
+        this.hudMode = mode;
+
+        const hudSelect = document.getElementById('setting-hud-mode');
+        if (hudSelect) hudSelect.value = mode;
+
+        const btn = document.getElementById('btn-hud-toggle');
+        if (btn) btn.classList.toggle('active', mode !== 'hidden');
+
+        const labelMap = { full: 'FULL', minimal: 'MIN', hidden: 'OFF' };
+        const label = document.getElementById('hud-toggle-label');
+        if (label) label.innerText = labelMap[mode] || 'HUD';
+
+        localStorage.setItem('aerox_hud_mode', mode);
+    }
+
+    toggleHUDMode() {
+        const modes = ['full', 'minimal', 'hidden'];
+        const current = this.hudMode || 'full';
+        const idx = modes.indexOf(current);
+        const nextMode = modes[(idx + 1) % modes.length];
+        this.setHUDMode(nextMode);
+        this.showToast(`👁️ HUD Overlays: ${nextMode.toUpperCase()}`);
+    }
+
+    updateSpeedMultiplier(scale) {
+        scale = Math.max(0.2, Math.min(3.0, parseFloat(scale) || 1.0));
+        this.physics.setSpeedMultiplier(scale);
+
+        const pct = Math.round(scale * 100);
+        const speedDisp = document.getElementById('val-speed-multiplier');
+        if (speedDisp) speedDisp.innerText = `${pct}% (${scale.toFixed(1)}x)`;
+
+        const slider = document.getElementById('setting-speed-slider');
+        if (slider) slider.value = scale;
+
+        const label = document.getElementById('speed-rate-label');
+        if (label) label.innerText = `${scale.toFixed(1)}x`;
+
+        document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+            const bSpeed = parseFloat(btn.getAttribute('data-speed'));
+            btn.classList.toggle('active', Math.abs(bSpeed - scale) < 0.05);
+        });
+
+        this.showToast(`⚡ Flight Speed: ${pct}% (${scale.toFixed(1)}x)`);
+    }
+
     syncSettingsUI() {
         const envSelect = document.getElementById('setting-env-select');
         if (envSelect && this.environment && this.environment.currentEnv) {
@@ -627,6 +733,29 @@ class Application {
         const flightModeSelect = document.getElementById('setting-flight-mode');
         if (flightModeSelect && this.physics) {
             flightModeSelect.value = this.physics.flightMode;
+        }
+
+        const hudSelect = document.getElementById('setting-hud-mode');
+        if (hudSelect) {
+            hudSelect.value = this.hudMode || 'full';
+        }
+
+        if (this.physics) {
+            const scale = this.physics.speedMultiplier || 1.0;
+            const pct = Math.round(scale * 100);
+            const speedDisp = document.getElementById('val-speed-multiplier');
+            if (speedDisp) speedDisp.innerText = `${pct}% (${scale.toFixed(1)}x)`;
+
+            const slider = document.getElementById('setting-speed-slider');
+            if (slider) slider.value = scale;
+
+            const label = document.getElementById('speed-rate-label');
+            if (label) label.innerText = `${scale.toFixed(1)}x`;
+
+            document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+                const bSpeed = parseFloat(btn.getAttribute('data-speed'));
+                btn.classList.toggle('active', Math.abs(bSpeed - scale) < 0.05);
+            });
         }
 
         const pidP = document.getElementById('pid-p');

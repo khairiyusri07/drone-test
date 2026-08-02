@@ -297,6 +297,21 @@ body, html {
     color: var(--text-muted);
 }
 
+/* HUD Visibility Override Modes */
+.hud-container.hud-hidden .hud-box {
+    display: none !important;
+}
+
+.hud-container.hud-minimal .top-left-hud,
+.hud-container.hud-minimal .bottom-left-hud,
+.hud-container.hud-minimal .bottom-right-hud {
+    display: none !important;
+}
+
+.hud-container.hud-minimal .top-right-hud {
+    display: flex !important;
+}
+
 /* Top Right Speed & Alt Gauges */
 .top-right-hud {
     top: 75px;
@@ -624,6 +639,14 @@ body, html {
     background: rgba(157, 78, 221, 0.15);
     border-color: var(--secondary);
     color: #fff;
+}
+
+.speed-preset-btn.active {
+    background: var(--primary) !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 10px var(--primary-glow) !important;
 }
 
 .action-divider {
@@ -1119,22 +1142,20 @@ body, html {
         display: none;
     }
 
-    /* === HUD ELEMENTS === */
-    .top-left-hud {
-        top: auto;
-        bottom: 210px;
-        left: 8px;
-        min-width: 130px;
-        padding: 8px 10px;
-        gap: 6px;
+    /* === HUD ELEMENTS ON MOBILE === */
+    .top-left-hud,
+    .bottom-left-hud {
+        display: none !important;
     }
 
     .top-right-hud {
-        top: auto;
-        bottom: 210px;
-        right: 8px;
-        padding: 8px 10px;
-        gap: 10px;
+        top: 60px !important;
+        bottom: auto !important;
+        right: 10px !important;
+        padding: 4px 10px !important;
+        gap: 8px !important;
+        background: rgba(10, 16, 26, 0.75) !important;
+        backdrop-filter: blur(8px) !important;
     }
 
     .gauge-value {
@@ -1142,29 +1163,24 @@ body, html {
     }
 
     .telemetry-gauge {
-        min-width: 48px;
+        min-width: 44px;
     }
 
     .gauge-divider {
-        height: 28px;
+        height: 24px;
     }
 
     .race-banner {
-        top: auto;
-        bottom: 210px;
-        gap: 10px;
-        padding: 6px 10px;
-        flex-direction: column;
+        top: 60px !important;
+        bottom: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        gap: 8px;
+        padding: 4px 12px;
+        flex-direction: row;
         text-align: center;
-    }
-
-    .race-timer {
-        font-size: 1.1rem;
-    }
-
-    /* Hide motor RPM bars on phone (too small) */
-    .bottom-left-hud {
-        display: none;
+        background: rgba(10, 16, 26, 0.75) !important;
+        backdrop-filter: blur(8px) !important;
     }
 
     /* Shrink radar */
@@ -1342,14 +1358,7 @@ body, html {
         display: none;
     }
 
-    .top-left-hud {
-        bottom: 195px;
-        min-width: 110px;
-    }
 
-    .top-right-hud {
-        bottom: 195px;
-    }
 
     .bottom-right-hud {
         bottom: 195px;
