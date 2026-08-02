@@ -32,7 +32,7 @@ export class SceneManager {
         this.camera.position.set(0, 2.5, 4.0);
 
         // FPV Camera Offset
-        this.fpvCamera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.01, 500);
+        this.fpvCamera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.02, 1500);
         this.fpvTiltAngle = 12;
 
         // Orbit Controls
@@ -96,22 +96,27 @@ export class SceneManager {
         const dronePos = droneMesh.position;
 
         if (this.activeCameraMode === 'FPV') {
-            // FPV camera on front HD lens module (facing forward along -Z)
-            const offset = new THREE.Vector3(0, 0.02, -0.04);
+            // FPV camera on front HD lens module (facing forward along +Z)
+            const offset = new THREE.Vector3(0, 0.02, 0.04);
             offset.applyQuaternion(droneQuaternion);
             this.camera.position.copy(dronePos).add(offset);
 
-            const tiltQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(-this.fpvTiltAngle));
-            const finalQuat = droneQuaternion.clone().multiply(tiltQuat);
+            // Rotate camera 180° around Y so Three.js camera (-Z) faces forward (+Z), plus apply FPV tilt up
+            const fpvQuat = new THREE.Quaternion();
+            const rotY180 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+            const tiltX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(-this.fpvTiltAngle));
+            fpvQuat.multiply(rotY180).multiply(tiltX);
+
+            const finalQuat = droneQuaternion.clone().multiply(fpvQuat);
             this.camera.quaternion.copy(finalQuat);
         } else if (this.activeCameraMode === 'CHASE') {
-            // Chase camera 1.2m behind (+Z) and 0.4m above Tello drone
+            // Chase camera 1.2m behind (-Z) and 0.4m above drone
             const idealOffset = new THREE.Vector3(0, 0.4, -1.2);
             idealOffset.applyQuaternion(droneQuaternion);
             const targetCamPos = dronePos.clone().add(idealOffset);
 
             this.camera.position.lerp(targetCamPos, 0.2);
-            const lookTarget = dronePos.clone().add(new THREE.Vector3(0, 0.05, -0.2));
+            const lookTarget = dronePos.clone().add(new THREE.Vector3(0, 0.05, 0.5).applyQuaternion(droneQuaternion));
             this.camera.lookAt(lookTarget);
         } else if (this.activeCameraMode === 'ORBIT') {
             this.controls.target.lerp(dronePos, 0.1);

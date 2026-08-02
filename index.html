@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,8 +30,14 @@
 
 <body>
     <div id="app-container">
+        <!-- Crash Red Flash Screen Overlay -->
+        <div id="crash-flash"></div>
+
         <!-- 3D Canvas Viewport -->
         <canvas id="webgl-canvas"></canvas>
+
+        <!-- Mouse Hover Trigger Zone for Auto-Hiding Top Bar -->
+        <div id="top-bar-trigger-zone"></div>
 
         <!-- Top Header Navigation & Mode Selector -->
         <header id="top-bar">
@@ -51,13 +58,22 @@
             </div>
 
             <div class="top-controls">
-                <button id="btn-hud-toggle" class="icon-btn" title="Toggle HUD Overlays (H)">👁️ <span id="hud-toggle-label">HUD</span></button>
-                <button id="btn-speed-toggle" class="icon-btn" title="Cycle Flight Speed Scale (0.5x, 1.0x, 1.5x, 2.0x, 3.0x)">⚡ <span id="speed-rate-label">1.0x</span></button>
+                <button id="btn-power-toggle" class="icon-btn power-btn active" title="Toggle Motor Power / Arm (X)">⚡ <span
+                        id="power-status-label">ARMED</span></button>
+                <button id="btn-checkpoint-toggle" class="icon-btn active" title="Toggle Helipad Checkpoint Respawn Mode (ON / OFF)">🚩 <span
+                        id="cp-toggle-label">CP ON</span></button>
+                <button id="btn-hud-toggle" class="icon-btn" title="Toggle HUD Overlays (H)">👁️ <span
+                        id="hud-toggle-label">HUD</span></button>
+                <button id="btn-speed-toggle" class="icon-btn"
+                    title="Cycle Flight Speed Scale (0.5x, 1.0x, 1.5x, 2.0x, 3.0x)">⚡ <span
+                        id="speed-rate-label">1.0x</span></button>
                 <button id="btn-sound-toggle" class="icon-btn" title="Toggle Audio (M)">🔊</button>
                 <button id="btn-camera-toggle" class="icon-btn" title="Change Camera View (C)">📹 <span
                         id="cam-name">CHASE</span></button>
-                <button id="btn-settings-toggle" class="icon-btn" title="Settings & Drone Tuning" onclick="if(window.app){window.app.openModal('modal-settings');}else{document.getElementById('modal-settings').classList.remove('hidden');}">⚙️</button>
-                <button id="btn-help-toggle" class="icon-btn" title="Controls & Help (?)" onclick="if(window.app){window.app.openModal('modal-help');}else{document.getElementById('modal-help').classList.remove('hidden');}">❓</button>
+                <button id="btn-settings-toggle" class="icon-btn" title="Settings & Drone Tuning"
+                    onclick="if(window.app){window.app.openModal('modal-settings');}else{document.getElementById('modal-settings').classList.remove('hidden');}">⚙️</button>
+                <button id="btn-help-toggle" class="icon-btn" title="Controls & Help (?)"
+                    onclick="if(window.app){window.app.openModal('modal-help');}else{document.getElementById('modal-help').classList.remove('hidden');}">❓</button>
             </div>
         </header>
 
@@ -73,6 +89,10 @@
 
             <!-- Top Left Flight Telemetry -->
             <div class="hud-box top-left-hud">
+                <div class="hud-stat-group">
+                    <span class="stat-label">ENGINE POWER</span>
+                    <span id="stat-power-state" class="stat-value highlight-mode">ARMED</span>
+                </div>
                 <div class="hud-stat-group">
                     <span class="stat-label">FLIGHT MODE</span>
                     <span id="stat-flight-mode" class="stat-value highlight-mode">STABILIZED</span>
@@ -262,8 +282,8 @@
                     <div class="preset-section">
                         <label>PRESET TRACKS</label>
                         <button class="preset-btn" data-preset="manual_plan"
-                            style="border-color: var(--primary); color: var(--primary); font-weight:700;">📜 Pelan
-                            Penerbangan Manual (Gambar)</button>
+                            style="border-color: var(--primary); color: var(--primary); font-weight:700;">PELAN DALAM
+                            DOKUMEN RUJUKAN</button>
                         <button class="preset-btn" data-preset="cyber">🌃 Cyber Neon Circuit</button>
                         <button class="preset-btn" data-preset="slalom">🚩 Slalom Challenge</button>
                         <button class="preset-btn" data-preset="canyon">⛰️ Canyon Obstacle Run</button>
@@ -332,14 +352,56 @@
                         </div>
 
                         <div class="setting-group">
-                            <label>⚡ Flight Speed & Thrust Scale: <span id="val-speed-multiplier">100% (1.0x)</span></label>
+                            <label>✨ 3D Drone Flight Path Line Trail</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <select id="setting-drone-trail" style="flex: 1;">
+                                    <option value="on" selected>Show Glowing Line Trail</option>
+                                    <option value="off">Hide Line Trail</option>
+                                </select>
+                                <button type="button" id="btn-clear-trail" class="preset-btn" style="padding: 6px 12px; font-size: 0.75rem;">🧹 Clear Trail</button>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>📌 Top Header Bar Auto-Hide</label>
+                            <select id="setting-autohide-bar">
+                                <option value="on" selected>Auto-Hide Top Bar (Hover to Reveal)</option>
+                                <option value="off">Always Keep Top Bar Visible</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>🚩 Helipad Checkpoint Reset Mode</label>
+                            <select id="setting-checkpoint-reset">
+                                <option value="on" selected>ON: Respawn at Last Helipad Checkpoint</option>
+                                <option value="off">OFF: Always Reset to Start Gate / Takeoff Pad</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>💥 Auto-Reset Position on Collision</label>
+                            <select id="setting-collision-reset">
+                                <option value="on" selected>ON: Auto-Restart Flight when Colliding</option>
+                                <option value="off">OFF: Bounce Off Obstacles (No Auto-Reset)</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label>⚡ Flight Speed & Thrust Scale: <span id="val-speed-multiplier">100%
+                                    (1.0x)</span></label>
                             <input type="range" id="setting-speed-slider" min="0.2" max="3.0" value="1.0" step="0.1">
-                            <div class="speed-presets-row" style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
-                                <button type="button" class="preset-btn speed-preset-btn" data-speed="0.5" style="padding: 4px 8px; font-size: 0.75rem;">🐢 50% Slow</button>
-                                <button type="button" class="preset-btn speed-preset-btn" data-speed="1.0" style="padding: 4px 8px; font-size: 0.75rem;">⚖️ 100% Normal</button>
-                                <button type="button" class="preset-btn speed-preset-btn" data-speed="1.5" style="padding: 4px 8px; font-size: 0.75rem;">⚡ 150% Sport</button>
-                                <button type="button" class="preset-btn speed-preset-btn" data-speed="2.0" style="padding: 4px 8px; font-size: 0.75rem;">🚀 200% Pro</button>
-                                <button type="button" class="preset-btn speed-preset-btn" data-speed="3.0" style="padding: 4px 8px; font-size: 0.75rem;">🔥 300% Ultra</button>
+                            <div class="speed-presets-row"
+                                style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+                                <button type="button" class="preset-btn speed-preset-btn" data-speed="0.5"
+                                    style="padding: 4px 8px; font-size: 0.75rem;">🐢 50% Slow</button>
+                                <button type="button" class="preset-btn speed-preset-btn" data-speed="1.0"
+                                    style="padding: 4px 8px; font-size: 0.75rem;">⚖️ 100% Normal</button>
+                                <button type="button" class="preset-btn speed-preset-btn" data-speed="1.5"
+                                    style="padding: 4px 8px; font-size: 0.75rem;">⚡ 150% Sport</button>
+                                <button type="button" class="preset-btn speed-preset-btn" data-speed="2.0"
+                                    style="padding: 4px 8px; font-size: 0.75rem;">🚀 200% Pro</button>
+                                <button type="button" class="preset-btn speed-preset-btn" data-speed="3.0"
+                                    style="padding: 4px 8px; font-size: 0.75rem;">🔥 300% Ultra</button>
                             </div>
                         </div>
 
@@ -430,6 +492,8 @@
                                         class="keybind-btn" data-action="rollLeft">←</button></div>
                                 <div class="keybind-row"><span class="kb-label">Roll Right</span><button
                                         class="keybind-btn" data-action="rollRight">→</button></div>
+                                <div class="keybind-row"><span class="kb-label">Toggle Motor Power (Arm)</span><button
+                                        class="keybind-btn" data-action="power">X</button></div>
                                 <div class="keybind-row"><span class="kb-label">Air Brake</span><button
                                         class="keybind-btn" data-action="brake">SPACE</button></div>
                                 <div class="keybind-row"><span class="kb-label">Cycle Camera</span><button
@@ -464,6 +528,7 @@
                             <div class="control-box">
                                 <h3>⌨️ Keyboard Flight Controls</h3>
                                 <ul>
+                                    <li><kbd>X</kbd> or Joystick Start : Toggle Motor Power (Arm / Disarm)</li>
                                     <li><kbd>W</kbd> / <kbd>S</kbd> : Throttle Up / Down</li>
                                     <li><kbd>A</kbd> / <kbd>D</kbd> : Yaw Left / Right</li>
                                     <li><kbd>↑</kbd> / <kbd>↓</kbd> : Pitch Forward / Backward</li>

@@ -27,15 +27,17 @@ export class RaceManager {
 
     scanTrackObjects(trackObjects) {
         // Filter out ring checkpoints, boost pads, helipads
-        this.checkpoints = trackObjects.filter(obj => 
+        this.checkpoints = trackObjects.filter(obj =>
             obj.userData.type === 'ring' || obj.userData.type === 'start_gate'
         );
 
         this.boostPads = trackObjects.filter(obj => obj.userData.type === 'boost');
-        this.helipads = trackObjects.filter(obj => obj.userData.type === 'helipad');
+        this.helipads = trackObjects.filter(obj => obj.userData.type === 'helipad' || obj.userData.isHelipad);
 
         this.currentCheckpointIndex = 0;
         this.isRaceActive = false;
+        this.lastHelipadId = null;
+        this.lastSavedCheckpoint = null;
 
         if (this.cpTotal) this.cpTotal.innerText = this.checkpoints.length;
         if (this.cpCurrent) this.cpCurrent.innerText = "0";
@@ -52,7 +54,35 @@ export class RaceManager {
 
         const dronePos = this.physics.position;
 
-        // 1. Check Ring Checkpoint Collisions
+        // 1. Check Helipad Touchdown Checkpoints (Savepoint)
+        if (this.helipads && this.helipads.length > 0) {
+            this.helipads.forEach(pad => {
+                const padPos = new THREE.Vector3();
+                pad.getWorldPosition(padPos);
+
+                const dx = dronePos.x - padPos.x;
+                const dz = dronePos.z - padPos.z;
+                const dy = Math.abs(dronePos.y - padPos.y);
+
+                const distHoriz = Math.sqrt(dx * dx + dz * dz);
+
+                // Horizontal distance < 0.6m, vertical distance < 0.8m
+                if (distHoriz < 0.6 && dy < 0.8) {
+                    if (this.lastHelipadId !== pad.uuid) {
+                        this.lastHelipadId = pad.uuid;
+                        this.lastSavedCheckpoint = {
+                            position: padPos.clone(),
+                            rotationY: pad.rotation.y || 0
+                        };
+                        if (this.onHelipadCheckpointSaved) {
+                            this.onHelipadCheckpointSaved(padPos.clone(), pad.rotation.y || 0, pad);
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Check Ring Checkpoint Collisions
         if (this.checkpoints.length > 0) {
             const nextCP = this.checkpoints[this.currentCheckpointIndex];
             if (nextCP) {
@@ -70,7 +100,7 @@ export class RaceManager {
             }
         }
 
-        // 2. Check Speed Boost Pads
+        // 3. Check Speed Boost Pads
         if (this.boostPads) {
             this.boostPads.forEach(pad => {
                 const padPos = new THREE.Vector3();

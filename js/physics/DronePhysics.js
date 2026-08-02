@@ -18,6 +18,7 @@ export class DronePhysics {
         this.angularVelocity = new THREE.Vector3(0, 0, 0);
 
         // Flight Controller State & Modes
+        this.isArmed = true; // Drone motor power state (Armed = ON, Disarmed = OFF)
         this.flightMode = 'STABILIZED'; // 'STABILIZED', 'ACRO', 'HOVER'
         this.motorPowers = [0.25, 0.25, 0.25, 0.25]; // 0.0 to 1.0
 
@@ -37,8 +38,27 @@ export class DronePhysics {
         this.yawTargetAltitude = null;
         this.isYawingActive = false;
 
+        // Crash Callback & Cooldown
+        this.onCrash = null;
+        this.lastCrashTime = 0;
+
         // Reset mesh position
         this.mesh.position.copy(this.position);
+    }
+
+    toggleArm() {
+        this.isArmed = !this.isArmed;
+        if (!this.isArmed) {
+            this.motorPowers = [0, 0, 0, 0];
+        }
+        return this.isArmed;
+    }
+
+    setArmed(state) {
+        this.isArmed = !!state;
+        if (!this.isArmed) {
+            this.motorPowers = [0, 0, 0, 0];
+        }
     }
 
     setSpeedMultiplier(scale) {
@@ -172,12 +192,17 @@ export class DronePhysics {
         f3 = Math.max(0, Math.min(maxMotorForce, f3));
         f4 = Math.max(0, Math.min(maxMotorForce, f4));
 
-        this.motorPowers = [
-            f1 / maxMotorForce,
-            f2 / maxMotorForce,
-            f3 / maxMotorForce,
-            f4 / maxMotorForce
-        ];
+        if (!this.isArmed) {
+            f1 = 0; f2 = 0; f3 = 0; f4 = 0;
+            this.motorPowers = [0, 0, 0, 0];
+        } else {
+            this.motorPowers = [
+                f1 / maxMotorForce,
+                f2 / maxMotorForce,
+                f3 / maxMotorForce,
+                f4 / maxMotorForce
+            ];
+        }
 
         // 2. Sum Forces & Acceleration
         const totalThrust = f1 + f2 + f3 + f4;
@@ -248,75 +273,114 @@ export class DronePhysics {
         this.droneModel.updateRotors(this.motorPowers, delta);
     }
 
+    triggerCrash(propType) {
+        const now = performance.now();
+        if (now - this.lastCrashTime < 600) return; // 600ms cooldown to avoid multi-trigger
+        this.lastCrashTime = now;
+
+        if (this.onCrash) {
+            this.onCrash(propType);
+        }
+    }
+
     checkPropCollisions(trackObjects) {
         if (!trackObjects || trackObjects.length === 0) return;
 
         const droneRadius = 0.12; // Physical collision radius for Tello
         const dronePos = this.position;
 
-        trackObjects.forEach(obj => {
+        for (let i = 0; i < trackObjects.length; i++) {
+            const obj = trackObjects[i];
             const type = obj.userData.type;
             const objPos = obj.position;
+            const rotY = obj.rotation.y || 0;
 
-            if (type === 'pole_1m' || type === 'slalom') {
-                // Vertical Pole Collision Check
-                const height = (type === 'pole_1m') ? 1.0 : 10.0;
-                const poleRadius = (type === 'pole_1m') ? 0.12 : 0.15;
-                const minDistance = poleRadius + droneRadius;
+            if (type === 'tunnel') {
+                // ── Rectangular Tunnel Collision (1m x 1m x 1m open front & back) ──
+                const localDrone = dronePos.clone().sub(objPos).applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotY);
+                const W = 1.0;
+                const H = 1.0;
+                const D = 1.0;
+
+                // Check if drone is inside tunnel depth envelope (Z zone)
+                if (Math.abs(localDrone.z) <= (D / 2 + droneRadius) && localDrone.y >= 0 && localDrone.y <= (H + droneRadius + 0.1)) {
+                    let collided = false;
+
+                    // 1. Left/Right Side Wall Posts & Frame Collision
+                    if (Math.abs(localDrone.x) >= (W / 2 - droneRadius) && Math.abs(localDrone.x) <= (W / 2 + droneRadius + 0.15)) {
+                        collided = true;
+                    }
+
+                    // 2. Roof Ceiling Crossbars Collision
+                    if (localDrone.y >= (H - droneRadius) && Math.abs(localDrone.x) <= (W / 2 + droneRadius)) {
+                        collided = true;
+                    }
+
+                    // 3. Corner Posts (4 vertical cylinders at corners)
+                    const postRadius = 0.05 + droneRadius;
+                    const corners = [[-W / 2, D / 2], [W / 2, D / 2], [-W / 2, -D / 2], [W / 2, -D / 2]];
+                    for (const [cx, cz] of corners) {
+                        const dist = Math.sqrt(Math.pow(localDrone.x - cx, 2) + Math.pow(localDrone.z - cz, 2));
+                        if (dist < postRadius) {
+                            collided = true;
+                            break;
+                        }
+                    }
+
+                    if (collided) {
+                        this.triggerCrash('tunnel');
+                        return;
+                    }
+                }
+            } else if (type === 'gate_1m') {
+                // 1m x 1m Gate Frame (Posts and Top Bar)
+                const localDrone = dronePos.clone().sub(objPos).applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotY);
+                const postRadius = 0.08 + droneRadius;
+                const leftDist = Math.sqrt(Math.pow(localDrone.x - (-0.5), 2) + Math.pow(localDrone.z, 2));
+                const rightDist = Math.sqrt(Math.pow(localDrone.x - 0.5, 2) + Math.pow(localDrone.z, 2));
+
+                if (localDrone.y >= 0 && localDrone.y <= 1.1) {
+                    if (leftDist < postRadius || rightDist < postRadius) {
+                        this.triggerCrash('gate_1m');
+                        return;
+                    }
+                }
+                if (Math.abs(localDrone.x) <= 0.55 && Math.abs(localDrone.z) <= 0.15 && Math.abs(localDrone.y - 1.0) < 0.15) {
+                    this.triggerCrash('gate_1m');
+                    return;
+                }
+            } else if (type === 'ring') {
+                // Ring Checkpoint (Outer Ring Frame Collision)
+                const localDrone = dronePos.clone().sub(objPos).applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotY);
+                if (Math.abs(localDrone.z) <= 0.15) {
+                    const distFromCenter = Math.sqrt(Math.pow(localDrone.x, 2) + Math.pow(localDrone.y - 1.0, 2));
+                    const ringRadius = 0.6;
+                    const ringThickness = 0.06 + droneRadius;
+                    if (distFromCenter >= (ringRadius - ringThickness) && distFromCenter <= (ringRadius + ringThickness)) {
+                        this.triggerCrash('ring');
+                        return;
+                    }
+                }
+            } else if (type === 'pole_1m' || type === 'slalom') {
+                const height = (type === 'pole_1m') ? 1.0 : 1.5;
+                const poleRadius = 0.12 + droneRadius;
 
                 if (dronePos.y >= 0 && dronePos.y <= height + 0.1) {
                     const dx = dronePos.x - objPos.x;
                     const dz = dronePos.z - objPos.z;
                     const distHoriz = Math.sqrt(dx * dx + dz * dz);
-
-                    if (distHoriz < minDistance && distHoriz > 0.0001) {
-                        const nx = dx / distHoriz;
-                        const nz = dz / distHoriz;
-
-                        this.position.x = objPos.x + nx * (minDistance + 0.01);
-                        this.position.z = objPos.z + nz * (minDistance + 0.01);
-
-                        const dot = this.velocity.x * nx + this.velocity.z * nz;
-                        if (dot < 0) {
-                            this.velocity.x -= 1.6 * dot * nx;
-                            this.velocity.z -= 1.6 * dot * nz;
-                        }
-                        this.angularVelocity.add(new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4));
-                    }
-                }
-            } else if (type === 'gate_1m') {
-                // 1m x 1m Gate Frame (Left Post, Right Post, Top Bar)
-                const rotY = obj.rotation.y;
-                const localDrone = dronePos.clone().sub(objPos).applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotY);
-
-                const postRadius = 0.08 + droneRadius;
-                const leftDist = Math.sqrt(Math.pow(localDrone.x - (-0.5), 2) + Math.pow(localDrone.z, 2));
-                const rightDist = Math.sqrt(Math.pow(localDrone.x - 0.5, 2) + Math.pow(localDrone.z, 2));
-
-                if (localDrone.y >= 0 && localDrone.y <= 1.05) {
-                    if (leftDist < postRadius || rightDist < postRadius) {
-                        this.velocity.multiplyScalar(-0.6);
-                        this.angularVelocity.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
-                    }
-                }
-
-                // Top Crossbar at y = 1.0m
-                if (Math.abs(localDrone.x) <= 0.55 && Math.abs(localDrone.z) <= 0.15) {
-                    if (Math.abs(localDrone.y - 1.0) < 0.12) {
-                        this.velocity.y = -Math.abs(this.velocity.y) * 0.7 - 0.5;
-                        this.position.y = objPos.y + 0.85;
+                    if (distHoriz < poleRadius && distHoriz > 0.0001) {
+                        this.triggerCrash(type);
+                        return;
                     }
                 }
             } else if (type === 'barrier') {
-                // Solid Obstacle Block Collision
-                const rotY = obj.rotation.y;
                 const localDrone = dronePos.clone().sub(objPos).applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotY);
-
-                if (Math.abs(localDrone.x) <= 3.2 && Math.abs(localDrone.z) <= 1.2 && localDrone.y >= 0 && localDrone.y <= 8.2) {
-                    this.velocity.multiplyScalar(-0.6);
-                    this.position.sub(this.velocity.clone().multiplyScalar(0.04));
+                if (Math.abs(localDrone.x) <= 1.2 && Math.abs(localDrone.z) <= 0.4 && localDrone.y >= 0 && localDrone.y <= 1.5) {
+                    this.triggerCrash('barrier');
+                    return;
                 }
             }
-        });
+        }
     }
 }

@@ -22,6 +22,7 @@ export class InputManager {
             rollLeft: 'ArrowLeft',
             rollRight: 'ArrowRight',
             brake: 'Space',
+            power: 'KeyX',
             camera: 'KeyC',
             mode: 'KeyM',
             editor: 'KeyE',
@@ -55,6 +56,7 @@ export class InputManager {
         };
 
         // Event Callbacks
+        this.onPowerToggle = null;
         this.onCameraToggle = null;
         this.onModeToggle = null;
         this.onHUDToggle = null;
@@ -62,6 +64,7 @@ export class InputManager {
         this.onResetDrone = null;
         this.onRotateEditorItem = null;
         this.onDeleteEditorItem = null;
+        this.lastGpArmPressed = false;
 
         // Key rebind listening state
         this.rebindTargetAction = null;
@@ -138,6 +141,7 @@ export class InputManager {
 
         this.keys[e.code] = true;
 
+        if (e.code === this.keyBindings.power && this.onPowerToggle) this.onPowerToggle();
         if (e.code === this.keyBindings.camera && this.onCameraToggle) this.onCameraToggle();
         if (e.code === this.keyBindings.mode && this.onModeToggle) this.onModeToggle();
         if (e.code === this.keyBindings.hud && this.onHUDToggle) this.onHUDToggle();
@@ -201,7 +205,7 @@ export class InputManager {
             joyRoll = this.processStickAxis(this.touchInputs.rightX);
         }
 
-        // 3. Web Gamepad API Inputs
+        // 3. Web Gamepad API Inputs & Arming Button (Button 9 / 8 / 4 / 0)
         let gpThrotY = 0.0;
         let gpRoll = 0.0;
         let gpPitch = 0.0;
@@ -211,14 +215,25 @@ export class InputManager {
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
         for (let i = 0; i < gamepads.length; i++) {
             const gp = gamepads[i];
-            if (gp && gp.axes.length >= 4) {
-                const s = this.joystickSettings;
-                gpThrotY = this.processStickAxis(-gp.axes[s.axisThrottle] || 0);
-                gpYaw = this.processStickAxis(gp.axes[s.axisYaw] || 0);
-                gpPitch = this.processStickAxis(-gp.axes[s.axisPitch] || 0);
-                gpRoll = this.processStickAxis(gp.axes[s.axisRoll] || 0);
-                hasGamepad = true;
-                break;
+            if (gp) {
+                if (gp.buttons && gp.buttons.length > 0) {
+                    const armPressed = (gp.buttons[9] && gp.buttons[9].pressed) ||
+                                       (gp.buttons[8] && gp.buttons[8].pressed) ||
+                                       (gp.buttons[4] && gp.buttons[4].pressed);
+                    if (armPressed && !this.lastGpArmPressed) {
+                        if (this.onPowerToggle) this.onPowerToggle();
+                    }
+                    this.lastGpArmPressed = armPressed;
+                }
+                if (gp.axes && gp.axes.length >= 4) {
+                    const s = this.joystickSettings;
+                    gpThrotY = this.processStickAxis(-gp.axes[s.axisThrottle] || 0);
+                    gpYaw = this.processStickAxis(gp.axes[s.axisYaw] || 0);
+                    gpPitch = this.processStickAxis(-gp.axes[s.axisPitch] || 0);
+                    gpRoll = this.processStickAxis(gp.axes[s.axisRoll] || 0);
+                    hasGamepad = true;
+                    break;
+                }
             }
         }
 

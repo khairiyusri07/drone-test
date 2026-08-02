@@ -3,6 +3,7 @@ import { SceneManager } from './engine/SceneManager.js';
 import { EnvironmentManager } from './engine/Environment.js';
 import { DroneModel } from './drone/DroneModel.js';
 import { DronePhysics } from './physics/DronePhysics.js';
+import { DroneTrail } from './drone/DroneTrail.js';
 import { InputManager } from './input/InputManager.js';
 import { TrackEditor } from './editor/TrackEditor.js';
 import { HUDController } from './ui/HUDController.js';
@@ -24,13 +25,25 @@ class Application {
         // 3. Initialize Audio
         this.audio = new AudioEngine();
 
-        // 4. Initialize Drone Model & Physics
+        // 4. Initialize Drone Model, Physics & 3D Flight Trail
         this.droneModel = new DroneModel(this.sceneManager.scene);
         this.physics = new DronePhysics(this.droneModel);
+        this.droneTrail = new DroneTrail(this.sceneManager.scene);
+
+        // Crash Collision Handler
+        this.physics.onCrash = (propType) => this.handleDroneCrash(propType);
 
         // 5. Initialize Race & Track Systems
         this.raceManager = new RaceManager(this.physics, this.audio);
         this.trackEditor = new TrackEditor(this.sceneManager);
+        this.lastCheckpoint = null;
+
+        this.raceManager.onHelipadCheckpointSaved = (pos, rotY, padMesh) => {
+            this.lastCheckpoint = { position: pos, rotationY: rotY };
+            if (this.audio) this.audio.playCheckpointSound();
+            this.showToast("🚩 Checkpoint Saved: Helipad Landing Pad!");
+        };
+
         this.trackEditor.loadPresetTrack('manual_plan');
         this.raceManager.scanTrackObjects(this.trackEditor.trackObjects);
         this.resetDroneToStartGate();
@@ -42,11 +55,18 @@ class Application {
         // Application State
         this.currentMode = 'FLY'; // 'FLY' or 'BUILD'
         this.hudMode = localStorage.getItem('aerox_hud_mode') || 'full';
+        this.checkpointResetEnabled = localStorage.getItem('aerox_cp_reset') !== 'false'; // Default ON
+        this.collisionResetEnabled = localStorage.getItem('aerox_collision_reset') !== 'false'; // Default ON
         this.lastTime = performance.now();
+        this.topBarAutoHideEnabled = true;
+        this.topBarHideTimer = null;
 
-        // Setup Event Handlers & Start Loop
+        // Setup Event Handlers, Auto-Hide Header & Start Loop
         this.setupInputHandlers();
         this.setupUIListeners();
+        this.updateCheckpointResetUI();
+        this.updateCollisionResetUI();
+        this.initTopBarAutoHide();
         this.setHUDMode(this.hudMode);
         this.startLoop();
 
@@ -96,6 +116,11 @@ class Application {
             this.showToast(`Camera: ${nextMode}`);
         };
 
+        // Toggle Motor Power / Arm (X key or Gamepad Start)
+        this.input.onPowerToggle = () => {
+            this.togglePower();
+        };
+
         // Toggle Flight Mode (Stabilized / Acro / Hover)
         this.input.onModeToggle = () => {
             const modes = ['STABILIZED', 'ACRO', 'HOVER'];
@@ -130,7 +155,129 @@ class Application {
         };
     }
 
+    togglePower() {
+        const armed = this.physics.toggleArm();
+        this.updatePowerUI(armed);
+        this.showToast(armed ? "🟢 Drone Engine ARMED (POWER ON)" : "🔴 Drone Engine DISARMED (POWER OFF)");
+    }
+
+    updatePowerUI(armed) {
+        const btn = document.getElementById('btn-power-toggle');
+        const label = document.getElementById('power-status-label');
+        if (btn && label) {
+            btn.classList.toggle('active', armed);
+            btn.classList.toggle('disarmed', !armed);
+            label.innerText = armed ? "ARMED" : "DISARMED";
+        }
+
+        const stat = document.getElementById('stat-power-state');
+        if (stat) {
+            stat.innerText = armed ? "ARMED" : "DISARMED";
+            stat.classList.toggle('highlight-mode', armed);
+            stat.classList.toggle('highlight-disarmed', !armed);
+        }
+    }
+
+    handleDroneCrash(propType) {
+        // 1. Audio Crash Sound
+        if (this.audio) {
+            this.audio.playCrashSound();
+        }
+
+        // 2. Red Flash Overlay Animation
+        const overlay = document.getElementById('crash-flash');
+        if (overlay) {
+            overlay.classList.add('flash-active');
+            setTimeout(() => overlay.classList.remove('flash-active'), 350);
+        }
+
+        // 3. Notification Toast & Collision Action
+        const names = {
+            tunnel: 'Tunnel Frame',
+            gate_1m: 'Race Gate',
+            ring: 'Checkpoint Ring',
+            pole_1m: 'Slalom Pole',
+            slalom: 'Slalom Pole',
+            barrier: 'Barrier Wall'
+        };
+        const propName = names[propType] || 'Obstacle';
+
+        if (this.collisionResetEnabled) {
+            this.showToast(`💥 CRASHED into ${propName}! Restarting flight...`);
+
+            // Auto-Restart Game / Drone Position
+            this.resetDroneToStartGate();
+
+            // Reset Active Race Timer if racing
+            if (this.raceManager && this.raceManager.isRaceActive) {
+                this.raceManager.isRaceActive = false;
+                const timerVal = document.getElementById('timer-val');
+                if (timerVal) timerVal.innerText = "00:00.000";
+            }
+        } else {
+            this.showToast(`💥 Collided with ${propName}!`);
+            // Bounce drone velocity backwards cleanly without auto-resetting position
+            this.physics.velocity.multiplyScalar(-0.4);
+            this.physics.angularVelocity.add(new THREE.Vector3((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3));
+        }
+    }
+
+    toggleCollisionReset(enabled) {
+        this.collisionResetEnabled = enabled !== undefined ? !!enabled : !this.collisionResetEnabled;
+        localStorage.setItem('aerox_collision_reset', this.collisionResetEnabled ? 'true' : 'false');
+        this.updateCollisionResetUI();
+        this.showToast(this.collisionResetEnabled 
+            ? "💥 Auto-Reset on Collision: ON (Restarts Flight on Crash)" 
+            : "🛡️ Auto-Reset on Collision: OFF (Bounce Only)"
+        );
+    }
+
+    updateCollisionResetUI() {
+        const sel = document.getElementById('setting-collision-reset');
+        if (sel) {
+            sel.value = this.collisionResetEnabled ? 'on' : 'off';
+        }
+    }
+
+    toggleCheckpointReset(enabled) {
+        this.checkpointResetEnabled = enabled !== undefined ? !!enabled : !this.checkpointResetEnabled;
+        localStorage.setItem('aerox_cp_reset', this.checkpointResetEnabled ? 'true' : 'false');
+        this.updateCheckpointResetUI();
+        this.showToast(this.checkpointResetEnabled 
+            ? "🚩 Helipad Checkpoint Reset: ON (Respawn at Last Checkpoint)" 
+            : "🏁 Helipad Checkpoint Reset: OFF (Always Reset to Start Gate)"
+        );
+    }
+
+    updateCheckpointResetUI() {
+        const btn = document.getElementById('btn-checkpoint-toggle');
+        const label = document.getElementById('cp-toggle-label');
+        if (btn && label) {
+            btn.classList.toggle('active', this.checkpointResetEnabled);
+            label.innerText = this.checkpointResetEnabled ? "CP ON" : "CP OFF";
+        }
+
+        const sel = document.getElementById('setting-checkpoint-reset');
+        if (sel) {
+            sel.value = this.checkpointResetEnabled ? 'on' : 'off';
+        }
+    }
+
     resetDroneToStartGate() {
+        if (this.droneTrail) {
+            this.droneTrail.clear();
+        }
+
+        // 1. Reset to Last Saved Helipad Checkpoint if Checkpoint Reset is ON and a checkpoint exists
+        if (this.checkpointResetEnabled && this.lastCheckpoint) {
+            const { position, rotationY } = this.lastCheckpoint;
+            this.physics.resetPosition(position.x, position.y + 0.18, position.z);
+            this.physics.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotationY);
+            this.showToast("🚩 Drone reset to Last Helipad Checkpoint!");
+            return;
+        }
+
+        // 2. Fallback to Start Arch / Takeoff Pad (if Checkpoint Reset is OFF or no checkpoint saved)
         const startArch = this.trackEditor.trackObjects.find(
             obj => obj.userData.type === 'start_gate' || obj.userData.isStartGate
         );
@@ -151,6 +298,12 @@ class Application {
             const el = document.getElementById(id);
             if (el) el.addEventListener(evt, fn);
         };
+
+        // Power / Arm Toggle Button
+        on('btn-power-toggle', 'click', () => this.togglePower());
+
+        // Checkpoint Reset Toggle Button
+        on('btn-checkpoint-toggle', 'click', () => this.toggleCheckpointReset());
 
         // Mode Switch Buttons
         on('btn-mode-fly', 'click', () => this.setMode('FLY'));
@@ -267,6 +420,8 @@ class Application {
         on('btn-delete-item', 'click', () => this.trackEditor.deleteSelected());
         on('btn-clear-track', 'click', () => {
             this.trackEditor.clearTrack();
+            this.lastCheckpoint = null;
+            if (this.raceManager) this.raceManager.scanTrackObjects(this.trackEditor.trackObjects);
             this.showToast("Track cleared");
         });
 
@@ -274,8 +429,13 @@ class Application {
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.getAttribute('data-preset');
-                this.trackEditor.loadPresetTrack(preset);
-                this.showToast(`Loaded Preset: ${preset.toUpperCase()}`);
+                if (preset) {
+                    this.lastCheckpoint = null;
+                    this.trackEditor.loadPresetTrack(preset);
+                    if (this.raceManager) this.raceManager.scanTrackObjects(this.trackEditor.trackObjects);
+                    this.resetDroneToStartGate();
+                    this.showToast(`Loaded Preset: ${preset.toUpperCase()}`);
+                }
             });
         });
 
@@ -355,6 +515,49 @@ class Application {
         if (hudModeSelect) {
             hudModeSelect.addEventListener('change', (e) => {
                 this.setHUDMode(e.target.value);
+            });
+        }
+
+        const trailSelect = document.getElementById('setting-drone-trail');
+        if (trailSelect) {
+            trailSelect.addEventListener('change', (e) => {
+                const enabled = e.target.value === 'on';
+                if (this.droneTrail) this.droneTrail.setEnabled(enabled);
+                this.showToast(enabled ? "✨ 3D Line Trail Enabled" : "3D Line Trail Hidden");
+            });
+        }
+
+        const btnClearTrail = document.getElementById('btn-clear-trail');
+        if (btnClearTrail) {
+            btnClearTrail.addEventListener('click', () => {
+                if (this.droneTrail) this.droneTrail.clear();
+                this.showToast("🧹 Drone Flight Line Trail Cleared!");
+            });
+        }
+
+        const autoHideSelect = document.getElementById('setting-autohide-bar');
+        if (autoHideSelect) {
+            autoHideSelect.addEventListener('change', (e) => {
+                this.topBarAutoHideEnabled = e.target.value === 'on';
+                const topBar = document.getElementById('top-bar');
+                if (topBar && !this.topBarAutoHideEnabled) {
+                    topBar.classList.remove('autohide-hidden');
+                }
+                this.showToast(this.topBarAutoHideEnabled ? "📌 Top Bar Auto-Hide Enabled" : "📌 Top Bar Always Visible");
+            });
+        }
+
+        const cpResetSelect = document.getElementById('setting-checkpoint-reset');
+        if (cpResetSelect) {
+            cpResetSelect.addEventListener('change', (e) => {
+                this.toggleCheckpointReset(e.target.value === 'on');
+            });
+        }
+
+        const collisionResetSelect = document.getElementById('setting-collision-reset');
+        if (collisionResetSelect) {
+            collisionResetSelect.addEventListener('change', (e) => {
+                this.toggleCollisionReset(e.target.value === 'on');
             });
         }
 
@@ -622,6 +825,55 @@ class Application {
         });
     }
 
+    initTopBarAutoHide() {
+        const topBar = document.getElementById('top-bar');
+        const triggerZone = document.getElementById('top-bar-trigger-zone');
+        if (!topBar) return;
+
+        const scheduleHide = () => {
+            if (this.topBarHideTimer) clearTimeout(this.topBarHideTimer);
+            if (!this.topBarAutoHideEnabled) {
+                topBar.classList.remove('autohide-hidden');
+                return;
+            }
+
+            this.topBarHideTimer = setTimeout(() => {
+                const isHovering = topBar.matches(':hover');
+                const hasOpenModal = document.querySelector('.modal-overlay:not(.hidden)');
+                if (!isHovering && !hasOpenModal) {
+                    topBar.classList.add('autohide-hidden');
+                } else {
+                    scheduleHide();
+                }
+            }, 2500);
+        };
+
+        const reveal = () => {
+            topBar.classList.remove('autohide-hidden');
+            scheduleHide();
+        };
+
+        window.addEventListener('mousemove', () => reveal());
+        window.addEventListener('keydown', () => reveal());
+        window.addEventListener('touchstart', () => reveal());
+
+        if (triggerZone) {
+            triggerZone.addEventListener('mouseenter', () => reveal());
+            triggerZone.addEventListener('mousemove', () => reveal());
+        }
+
+        topBar.addEventListener('mouseenter', () => {
+            topBar.classList.remove('autohide-hidden');
+            if (this.topBarHideTimer) clearTimeout(this.topBarHideTimer);
+        });
+
+        topBar.addEventListener('mouseleave', () => {
+            scheduleHide();
+        });
+
+        scheduleHide();
+    }
+
     startLoop() {
         const loop = (now) => {
             const delta = Math.min((now - this.lastTime) / 1000, 0.1);
@@ -630,9 +882,10 @@ class Application {
             // 1. Process Input
             const inputs = this.input.update();
 
-            // 2. Update Drone Physics in Fly Mode with 3D Prop Collision Checking
+            // 2. Update Drone Physics in Fly Mode & Update 3D Line Trail
             if (this.currentMode === 'FLY') {
                 this.physics.update(inputs, delta, this.trackEditor.trackObjects);
+                if (this.droneTrail) this.droneTrail.update(this.physics.position);
                 this.audio.updateMotorSound(this.physics.motorPowers);
                 this.raceManager.update(delta);
                 this.hud.update(delta);
@@ -738,6 +991,16 @@ class Application {
         const hudSelect = document.getElementById('setting-hud-mode');
         if (hudSelect) {
             hudSelect.value = this.hudMode || 'full';
+        }
+
+        const trailSelect = document.getElementById('setting-drone-trail');
+        if (trailSelect && this.droneTrail) {
+            trailSelect.value = this.droneTrail.enabled ? 'on' : 'off';
+        }
+
+        const autoHideSelect = document.getElementById('setting-autohide-bar');
+        if (autoHideSelect) {
+            autoHideSelect.value = this.topBarAutoHideEnabled ? 'on' : 'off';
         }
 
         if (this.physics) {

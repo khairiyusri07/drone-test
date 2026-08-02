@@ -59,7 +59,7 @@ export class AudioEngine {
     }
 
     updateMotorSound(motorPowers) {
-        if (!this.initialized || this.isMuted || !this.ctx) return;
+        if (!this.initialized || !this.ctx) return;
 
         // Resume AudioContext if suspended by browser autoplay policy
         if (this.ctx.state === 'suspended') {
@@ -67,7 +67,14 @@ export class AudioEngine {
         }
 
         // Average motor power [0.0 to 1.0]
-        const avgPower = motorPowers.reduce((a, b) => a + b, 0) / (motorPowers.length || 4);
+        const avgPower = motorPowers ? (motorPowers.reduce((a, b) => a + b, 0) / (motorPowers.length || 4)) : 0;
+
+        if (avgPower < 0.02 || this.isMuted) {
+            if (this.gainNode) this.gainNode.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+            return;
+        } else if (this.gainNode) {
+            this.gainNode.gain.setTargetAtTime(0.15, this.ctx.currentTime, 0.05);
+        }
 
         // Modulate Frequency based on motor RPM: 100 Hz at idle -> 550 Hz at full throttle
         const targetFreq = 100 + avgPower * 450;
@@ -96,5 +103,27 @@ export class AudioEngine {
 
         osc.start();
         osc.stop(this.ctx.currentTime + 0.3);
+    }
+
+    playCrashSound() {
+        if (!this.initialized || this.isMuted || !this.ctx) return;
+
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.25);
+
+            gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.25);
+        } catch (e) {}
     }
 }
