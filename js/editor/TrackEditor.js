@@ -409,19 +409,20 @@ export class TrackEditor {
             this.placeObject('pole_1m', new THREE.Vector3(2.0, 0, 0.0));
 
             // 6. Section 5: "Through the Tunnel" at (+2.0m, -1.0m)
-            const tunnel = this.placeObject('tunnel', new THREE.Vector3(2.0, 0, -1.0));
+            const tunnel = this.placeObject('tunnel', new THREE.Vector3(2.0, 0, -1.5));
 
             // 7. Section 6: "Landing Pad 2" (Yellow Circle - 0.5m Diameter) at (+2.0m, -2.0m)
-            this.placeObject('helipad', new THREE.Vector3(2.0, 0, -2.0));
+            this.placeObject('helipad', new THREE.Vector3(2.0, 0, -3.0));
 
             // 8. Section 7: "Sideward Up & Under" Gate Frame (1m x 1m) at (+1.0m, -2.0m)
-            const sideGate = this.placeObject('gate_1m', new THREE.Vector3(1.0, 0, -2.0));
+            const sideGate = this.placeObject('gate_1m', new THREE.Vector3(0.5, 0, -3.0));
 
             // 9. Section 8: "Point of Interest" (POI) Ring at (0.0m, -2.0m)
-            const poiRing = this.placeObject('ring', new THREE.Vector3(0.0, 0, -2.0));
+            this.placeObject('pole_1m', new THREE.Vector3(-1.0, 0, -3.0));
+
 
             // 10. Section 9: "Landing Pad 3" (Yellow Circle - 0.5m Diameter) at (-2.0m, -2.0m)
-            this.placeObject('helipad', new THREE.Vector3(-2.0, 0, -2.0));
+            this.placeObject('helipad', new THREE.Vector3(-2.0, 0, -3.0));
 
             this.deselectObject();
         } else if (presetName === 'cyber') {
